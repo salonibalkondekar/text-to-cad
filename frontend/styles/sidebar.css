@@ -1,0 +1,369 @@
+/* Sidebar Styles */
+.sidebar {
+    width: 350px;
+    background: #2d3748;
+    display: flex;
+    flex-direction: column;
+    padding-top: 60px;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 40px !important;
+}
+
+.sidebar.collapsed .sidebar-content,
+.sidebar.collapsed #console-container,
+.sidebar.collapsed .resize-handle-vertical {
+    display: none;
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: absolute;
+    top: 70px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+    right: 8px;
+}
+
+/* Resize Handles */
+.resize-handle-horizontal {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    cursor: ew-resize;
+    z-index: 999;
+}
+
+.resize-handle-horizontal:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.resize-handle-vertical {
+    display: none;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Custom scrollbar styling */
+.sidebar-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 14px;
+    color: #a0aec0;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* AI Prompt Section */
+.ai-prompt-section {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 12px;
+    padding: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+}
+
+.prompt-input {
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    padding: 16px;
+    color: white;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+.prompt-input:focus {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.15);
+}
+
+.prompt-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+/* Standardized Button Styles */
+.generate-button,
+.build-button,
+.project-item,
+.example-prompt {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+}
+
+.generate-button {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    margin-top: 16px;
+}
+
+.generate-button:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255,255,255,0.2);
+}
+
+.generate-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Code Section */
+.code-section {
+    flex-shrink: 0;
+}
+
+/* Mode Indicator */
+.mode-indicator {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mode-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+    transition: all 0.2s ease;
+}
+
+.mode-badge.cad-mode {
+    background: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.mode-badge.threejs-mode {
+    background: rgba(72, 187, 120, 0.2);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.mode-badge.badcad-mode {
+    background: rgba(237, 137, 54, 0.2);
+    color: #ed8936;
+    border: 1px solid rgba(237, 137, 54, 0.3);
+}
+
+.mode-description {
+    font-size: 11px;
+    color: #a0aec0;
+    line-height: 1.3;
+}
+
+.code-editor {
+    background: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e2e8f0;
+    resize: vertical;
+    height: 160px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.code-editor:focus {
+    border-color: #667eea;
+}
+
+.build-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    margin-top: 16px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.build-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Pre-defined Examples Section */
+.predefined-examples-section {
+    flex-shrink: 0;
+}
+
+.project-item {
+    background: #4a5568;
+    margin-bottom: 12px;
+    justify-content: flex-start;
+    text-align: left;
+    border: 1px solid transparent;
+}
+
+.project-item:hover {
+    background: #5a6578;
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+.project-item.active {
+    background: #667eea;
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.project-icon {
+    margin-right: 12px;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Example Prompts Section */
+.example-prompts-section {
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    user-select: none;
+    padding: 8px 0;
+}
+
+.collapsible-header:hover {
+    color: #667eea;
+}
+
+.toggle-arrow {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    color: #a0aec0;
+    width: 16px;
+    text-align: center;
+}
+
+.collapsible-content {
+    transition: all 0.3s ease;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.example-prompt {
+    background: #4a5568;
+    margin-bottom: 8px;
+    font-size: 13px;
+    justify-content: flex-start;
+    text-align: left;
+    border: 1px solid transparent;
+    min-height: 44px;
+}
+
+.example-prompt:hover {
+    background: #5a6578;
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Console container styling */
+#console-container {
+    flex-shrink: 0;
+    min-height: 80px;
+} 

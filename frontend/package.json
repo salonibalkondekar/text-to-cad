@@ -1,0 +1,32 @@
+{
+  "name": "ai-cad-js",
+  "version": "2.0.0",
+  "description": "AI-powered 3D CAD application with modular architecture",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8080",
+    "build": "echo 'No build process needed - static files'",
+    "test": "echo 'Open http://localhost:8000 in browser to test'"
+  },
+  "keywords": [
+    "ai",
+    "cad",
+    "3d",
+    "threejs",
+    "javascript",
+    "modular",
+    "natural-language"
+  ],
+  "author": "AI CAD Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ai-cad-js.git"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  }
+} 

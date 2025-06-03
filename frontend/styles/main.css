@@ -1,0 +1,63 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1a1a1a;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+#main-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Button Styles */
+button {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+button.active {
+    background: rgba(255,255,255,0.4);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+} 

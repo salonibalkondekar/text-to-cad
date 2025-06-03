@@ -1,0 +1,50 @@
+/* Header Styles */
+.header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+.tagline {
+    margin-left: 15px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.toolbar {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.toolbar button {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.toolbar button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.toolbar button.active {
+    background: rgba(255,255,255,0.4);
+} 

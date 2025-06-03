@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+
+# Editor related
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+
+# Logs
+*.log
+
+# Dependency directories
+jspm_packages/
+
+# Yarn
+.yarn/cache/
+
+# Environment configuration
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Render
+.next

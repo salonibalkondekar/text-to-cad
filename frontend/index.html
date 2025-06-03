@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CAD.js - AI-Powered 3D Model Generation</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <link rel="stylesheet" href="styles/viewport.css">
+    <link rel="stylesheet" href="styles/console.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Component -->
+        <div id="header"></div>
+        
+        <!-- Sidebar Component -->
+        <div id="sidebar"></div>
+
+        <!-- Main Content Component -->
+        <div id="main-content"></div>
+    </div>
+
+    <!-- External Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Load three-csg-ts (ESM build) -->
+    <script type="module">
+        import { CSG } from 'https://cdn.jsdelivr.net/npm/three-csg-ts@3.2.0/+esm';
+        window.CSG = CSG;
+    </script>
+    
+    <!-- Core Scripts -->
+    <script src="scripts/cad-engine.js"></script>
+    <script src="scripts/ai-generator.js"></script>
+    <script src="scripts/three-setup.js"></script>
+    <script src="scripts/projects.js"></script>
+    
+    <!-- Component Scripts -->
+    <script src="components/header.js"></script>
+    <script src="components/sidebar.js"></script>
+    <script src="components/viewport.js"></script>
+    <script src="components/console.js"></script>
+    
+    <!-- Main Application -->
+    <script src="scripts/app.js"></script>
+</body>
+</html> 

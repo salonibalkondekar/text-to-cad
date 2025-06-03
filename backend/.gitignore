@@ -1,0 +1,35 @@
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Package distribution
+dist/
+build/
+*.egg-info/
+
+# Editor-related
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# OS
+.DS_Store
+
+# Log files
+*.log
+
+# API Keys
+.env
+
+# BadCAD generated files
+*.stl
+/tmp/
