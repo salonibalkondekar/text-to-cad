@@ -1,6 +1,15 @@
 # AI CAD.js - Modular Architecture
 
-A modular AI-powered 3D CAD application that generates 3D models from natural language descriptions.
+A modular AI-powered 3D CAD application that generates 3D models from natural language descriptions with Google OAuth authentication and usage limits.
+
+## ✨ Features
+
+- **🤖 AI-Powered Model Generation**: Generate 3D models from natural language descriptions
+- **🔐 Google OAuth Authentication**: Secure sign-in with Google accounts
+- **📊 Usage Tracking**: 10 model generation limit per user
+- **🎮 Multiple CAD Modes**: BadCAD, Three.js CAD, and raw Three.js playground
+- **💾 STL Export**: Download generated models as STL files
+- **🎨 Real-time Visualization**: Interactive 3D viewport with controls
 
 ## 🏗️ Project Structure
 
@@ -42,9 +51,23 @@ open frontend/index.html
 
 # Option 2: Simple HTTP server
 cd frontend
-python -m http.server 8000
-# Then visit http://localhost:8000
+python -m http.server 8080
+# Then visit http://localhost:8080
 ```
+
+### 3. Google OAuth Setup (Required for AI Generation)
+
+To enable user authentication and model generation limits:
+
+1. Follow the detailed guide in [`GOOGLE_OAUTH_SETUP.md`](./GOOGLE_OAUTH_SETUP.md)
+2. Create Google Cloud credentials
+3. Update the Client ID in `frontend/scripts/auth.js`
+4. Users can then sign in and generate up to 10 models
+
+**Note**: Without Google OAuth setup, users can still:
+- View and edit code examples
+- Use the Three.js playground mode
+- Build models from pre-written code
 
 ---
 

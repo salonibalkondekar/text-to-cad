@@ -265,6 +265,49 @@
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
+/* Button Row for Build and Download */
+.button-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.button-row .build-button,
+.button-row .download-button {
+    flex: 1;
+    margin-top: 0;
+}
+
+.download-button {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    color: white;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+    box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3);
+}
+
+.download-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(56, 161, 105, 0.4);
+    background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.download-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Pre-defined Examples Section */
 .predefined-examples-section {
     flex-shrink: 0;
@@ -366,4 +409,45 @@
 #console-container {
     flex-shrink: 0;
     min-height: 80px;
-} 
+}
+
+/* Authentication Notices */
+.auth-notice, .usage-notice {
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.auth-notice {
+    background: rgba(0, 123, 255, 0.15);
+    border-color: rgba(0, 123, 255, 0.3);
+}
+
+.usage-notice {
+    background: rgba(220, 53, 69, 0.15);
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.notice-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notice-icon {
+    font-size: 16px;
+}
+
+.notice-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.prompt-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.05);
+}

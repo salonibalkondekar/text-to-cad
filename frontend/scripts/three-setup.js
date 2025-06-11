@@ -33,15 +33,6 @@ class ThreeJSManager {
             this.resizeRenderer();
             this.animate();
 
-            // Expose Three.js objects globally for the playground
-            Object.assign(window, { 
-                THREE, 
-                scene: this.scene, 
-                camera: this.camera, 
-                renderer: this.renderer,
-                controls: { reset: () => this.resetView() }
-            });
-
             console.log('🚀 Three.js initialized successfully');
             return true;
         } catch (error) {
@@ -143,7 +134,7 @@ class ThreeJSManager {
 
     setupAxes() {
         this.axesHelper = new THREE.AxesHelper(3);
-        this.axesHelper.visible = false;
+        this.axesHelper.visible = true;
         this.scene.add(this.axesHelper);
     }
 
@@ -242,42 +233,6 @@ class ThreeJSManager {
         }
     }
 
-    buildRawThreeJS(code) {
-        try {
-            console.log('🎮 Building raw Three.js code...');
-
-            // FAST PATH: nuke the current scene so eval starts fresh
-            while (this.scene.children.length) {
-                const obj = this.scene.children.pop();
-                obj.geometry?.dispose?.();
-                obj.material?.dispose?.();
-            }
-            
-            // Re-add the basic lighting and ground after clearing
-            this.setupLighting();
-            
-            // Reset camera to default position
-            this.resetView();
-
-            // The one-liner that "opens the floodgates":
-            try {
-                new Function('THREE', 'scene', 'camera', 'renderer', 'controls', code)(
-                    THREE, this.scene, this.camera, this.renderer, { reset: () => this.resetView() }
-                );
-                console.log('✅ Raw Three.js code executed successfully');
-                return { success: true };
-            } catch (execError) {
-                console.error('❌ Raw Three.js Build Error:', execError.message);
-                alert('Error in user code: ' + execError.message);
-                throw execError;
-            }
-
-        } catch (error) {
-            console.error('❌ Raw Three.js Build Error:', error.message);
-            throw error;
-        }
-    }
-
     getScene() {
         return this.scene;
     }
@@ -299,10 +254,10 @@ class ThreeJSManager {
             
             // Create material
             const material = new THREE.MeshPhongMaterial({ 
-                color: 0x667eea,
+                color: 0x222222,
                 transparent: false,
                 opacity: 1.0,
-                shininess: 100,
+                shininess: 5,
                 side: THREE.DoubleSide
             });
             
@@ -477,4 +432,4 @@ class ThreeJSManager {
         console.log(`📏 Parsed binary STL: ${vertices.length / 3} vertices, ${triangleCount} triangles`);
         return geometry;
     }
-} 
+}

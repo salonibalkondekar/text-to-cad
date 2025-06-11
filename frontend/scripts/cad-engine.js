@@ -14,33 +14,19 @@ class CADObject {
     }
 
     subtract(other) {
-        if (typeof CSG === 'undefined') {
-            throw new Error('CSG library not loaded. Ensure three-csg.js is included.');
-        }
-        // Perform CSG subtraction
-        const resultMesh = CSG.subtract(this.mesh.clone(), other.mesh.clone());
-        // Ensure result uses a standard material and shadows
-        resultMesh.traverse((child) => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-        return new CADObject(resultMesh);
+        // CSG operations now handled by backend
+        console.warn('CSG subtract operation - use BadCAD for proper boolean operations');
+        const group = new THREE.Group();
+        group.add(this.mesh.clone());
+        return new CADObject(group);
     }
 
     intersect(other) {
-        if (typeof CSG === 'undefined') {
-            throw new Error('CSG library not loaded. Ensure three-csg.js is included.');
-        }
-        const resultMesh = CSG.intersect(this.mesh.clone(), other.mesh.clone());
-        resultMesh.traverse((child) => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-        return new CADObject(resultMesh);
+        // CSG operations now handled by backend
+        console.warn('CSG intersect operation - use BadCAD for proper boolean operations');
+        const group = new THREE.Group();
+        group.add(this.mesh.clone());
+        return new CADObject(group);
     }
 
     build() {
@@ -64,10 +50,10 @@ const cad = {
         }
         const geometry = new THREE.BoxGeometry(w, h, d);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x667eea,
+            color: 0x222222,
             transparent: false,
             opacity: 1.0,
-            shininess: 100
+            shininess: 5
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
@@ -89,10 +75,10 @@ const cad = {
         }
         const geometry = new THREE.CylinderGeometry(r, r, h, seg);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x667eea,
+            color: 0x222222,
             transparent: false,
             opacity: 1.0,  
-            shininess: 100
+            shininess: 5
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
@@ -112,10 +98,10 @@ const cad = {
         }
         const geometry = new THREE.SphereGeometry(r, seg, seg);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x667eea,
+            color: 0x222222,
             transparent: false,
             opacity: 1.0,
-            shininess: 100
+            shininess: 5
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
@@ -140,8 +126,8 @@ const cad = {
         }
         const geometry = new THREE.ConeGeometry(rBottom, h, seg);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x667eea,
-            shininess: 100
+            color: 0x222222,
+            shininess: 5
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
@@ -170,8 +156,8 @@ const cad = {
         }
         const geometry = new THREE.TorusGeometry(r, t, rSeg, tSeg);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x667eea,
-            shininess: 100
+            color: 0x222222,
+            shininess: 5
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;

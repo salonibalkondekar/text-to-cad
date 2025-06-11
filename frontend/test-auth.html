@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .sign-in-btn { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .sign-in-btn:hover { background: #3367d6; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <div class="debug" id="debug">
+        <p>Debug information will appear here...</p>
+    </div>
+    
+    <div id="auth-section">
+        <div id="authLoading">Loading authentication...</div>
+        <div id="signInSection" style="display: none;">
+            <button class="sign-in-btn" id="signInBtn">Sign In with Google</button>
+        </div>
+        <div id="userInfo" style="display: none;">
+            <p>User is signed in!</p>
+        </div>
+    </div>
+
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    
+    <!-- Auth Script -->
+    <script src="scripts/auth.js"></script>
+    
+    <script>
+        function log(message) {
+            const debug = document.getElementById('debug');
+            debug.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+            console.log(message);
+        }
+        
+        log('🚀 Test page loaded');
+        
+        // Override console.log to capture auth service logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            if (args[0] && args[0].includes('AuthService') || args[0].includes('🔔') || args[0].includes('✅') || args[0].includes('❌')) {
+                log(args.join(' '));
+            }
+            originalLog.apply(console, args);
+        };
+        
+        // Check if auth service is available
+        setTimeout(() => {
+            if (window.authService) {
+                log('✅ Auth service is available');
+                window.authService.setAuthStateListener((authState) => {
+                    log('🔔 Auth state received: ' + JSON.stringify(authState));
+                    
+                    const authLoading = document.getElementById('authLoading');
+                    const signInSection = document.getElementById('signInSection');
+                    const userInfo = document.getElementById('userInfo');
+                    
+                    authLoading.style.display = 'none';
+                    
+                    if (authState.isSignedIn) {
+                        signInSection.style.display = 'none';
+                        userInfo.style.display = 'block';
+                    } else {
+                        signInSection.style.display = 'block';
+                        userInfo.style.display = 'none';
+                    }
+                });
+            } else {
+                log('❌ Auth service not available');
+            }
+        }, 1000);
+        
+        // Add click handler for sign-in button
+        document.getElementById('signInBtn').addEventListener('click', () => {
+            log('🖱️ Sign-in button clicked');
+            if (window.authService) {
+                window.authService.signIn();
+            } else {
+                log('❌ Auth service not available for sign-in');
+            }
+        });
+    </script>
+</body>
+</html>
