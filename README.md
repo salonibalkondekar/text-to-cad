@@ -12,7 +12,7 @@ A modular AI-powered 3D CAD application that generates 3D models from natural la
 
 
 
-*The AI CAD.js interface featuring the AI model generator, generated CAD code editor, and real-time 3D viewport with interactive controls.*
+*The Text-to-CAD interface featuring the AI model generator, generated CAD code editor, and real-time 3D viewport with interactive controls.*
 
 ---
 

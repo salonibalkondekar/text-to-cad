@@ -8,7 +8,7 @@ class HeaderComponent {
     render() {
         const headerHTML = `
             <div class="header">
-                <div class="logo">🤖 AI CAD.js</div>
+                <div class="logo">🤖 Text-to-CAD</div>
                 <div class="tagline">AI-Powered 3D Model Generation from Text</div>
                 <div class="user-section" id="userSection">
                     <div class="auth-loading" id="authLoading">Loading...</div>

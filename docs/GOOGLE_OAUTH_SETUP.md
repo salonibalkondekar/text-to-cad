@@ -1,6 +1,6 @@
 # Google OAuth Setup Guide
 
-This guide helps you set up Google OAuth authentication for AI CAD.js to enable user authentication and usage tracking (10 models per user).
+This guide helps you set up Google OAuth authentication for Text-to-CAD to enable user authentication and usage tracking (10 models per user).
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ This guide helps you set up Google OAuth authentication for AI CAD.js to enable 
 1. Navigate to **APIs & Services** → **OAuth consent screen**
 2. Choose **External** user type
 3. Fill required fields:
-   - **App name**: AI CAD.js
+   - **App name**: Text-to-CAD
    - **User support email**: Your email
    - **Developer contact**: Your email
 4. Add authorized domains if needed
@@ -32,7 +32,7 @@ This guide helps you set up Google OAuth authentication for AI CAD.js to enable 
 2. Click **Create Credentials** → **OAuth client ID**
 3. Select **Web application**
 4. Configure:
-   - **Name**: AI CAD.js Client
+   - **Name**: Text-to-CAD Client
    - **Authorized JavaScript origins**: 
      - `http://localhost:8080`
      - `http://127.0.0.1:8080`
