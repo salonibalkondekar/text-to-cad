@@ -1,4 +1,4 @@
-# AI CAD.js - Modular Architecture
+# Text-to-CAD: AI-Powered 3D CAD Application
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
@@ -6,11 +6,11 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-red.svg)](https://fastapi.tiangolo.com/)
 [![BadCAD](https://img.shields.io/badge/BadCAD-3D_Modeling-orange.svg)](https://github.com/wrongbad/badcad)
 
+![text-to-cad Application Interface](docs/images/app_ui.png)
+
 A modular AI-powered 3D CAD application that generates 3D models from natural language descriptions with Google OAuth authentication and usage limits. Built with [BadCAD](https://github.com/wrongbad/badcad) for solid modeling and Three.js for interactive visualization.
 
-## 📸 Application Preview
 
-![AI CAD.js Application Interface](docs/images/app_ui.png)
 
 *The AI CAD.js interface featuring the AI model generator, generated CAD code editor, and real-time 3D viewport with interactive controls.*
 
