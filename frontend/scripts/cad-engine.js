@@ -1,5 +1,22 @@
 // CAD Engine - 3D Object Creation and Operations
 
+// Helper function to create Blender-style default material
+function createBlenderMaterial(colorOverride = null) {
+    return new THREE.MeshStandardMaterial({
+        color: colorOverride || 0x8c8c8c,  // Blender's exact default gray
+        metalness: 0.0,      // Non-metallic by default
+        roughness: 0.5,      // Semi-matte finish like Blender
+        envMapIntensity: 0.5, // Subtle environment reflection
+        // Blender-style material properties
+        transparent: false,
+        opacity: 1.0,
+        side: THREE.FrontSide
+    });
+}
+
+// Make the function globally available
+window.createBlenderMaterial = createBlenderMaterial;
+
 // CAD Object class
 class CADObject {
     constructor(mesh) {
@@ -49,12 +66,7 @@ const cad = {
             d = depth ?? widthOrOptions;
         }
         const geometry = new THREE.BoxGeometry(w, h, d);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x222222,
-            transparent: false,
-            opacity: 1.0,
-            shininess: 5
-        });
+        const material = createBlenderMaterial();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -74,12 +86,7 @@ const cad = {
             seg = segments;
         }
         const geometry = new THREE.CylinderGeometry(r, r, h, seg);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x222222,
-            transparent: false,
-            opacity: 1.0,  
-            shininess: 5
-        });
+        const material = createBlenderMaterial();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -97,12 +104,7 @@ const cad = {
             seg = segments;
         }
         const geometry = new THREE.SphereGeometry(r, seg, seg);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x222222,
-            transparent: false,
-            opacity: 1.0,
-            shininess: 5
-        });
+        const material = createBlenderMaterial();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -125,10 +127,7 @@ const cad = {
             seg = segments;
         }
         const geometry = new THREE.ConeGeometry(rBottom, h, seg);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x222222,
-            shininess: 5
-        });
+        const material = createBlenderMaterial();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -155,10 +154,7 @@ const cad = {
             tSeg = tubularSegments;
         }
         const geometry = new THREE.TorusGeometry(r, t, rSeg, tSeg);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x222222,
-            shininess: 5
-        });
+        const material = createBlenderMaterial();
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -202,10 +198,10 @@ class ModelBuilder {
             this.currentModel = executeCode(cad, THREE, Math);
             
             if (this.currentModel) {
-                // Ensure model is properly positioned and visible
+                // Add to scene first
                 scene.add(this.currentModel);
                 
-                // Calculate bounding box to ensure model is in view
+                // Calculate bounding box
                 const box = new THREE.Box3().setFromObject(this.currentModel);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
@@ -241,4 +237,4 @@ class ModelBuilder {
     getCurrentModel() {
         return this.currentModel;
     }
-} 
+}

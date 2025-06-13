@@ -6,34 +6,59 @@ class ThreeJSManager {
         this.camera = null;
         this.renderer = null;
         this.axesHelper = null;
+        this.gridHelper = null;
+        this.polarGridHelper = null;
         this.animationEnabled = false;
         this.wireframeMode = false;
         this.modelBuilder = new ModelBuilder();
+        
+        // Grid and visual aids toggles
+        this.gridVisible = true;
+        this.axesVisible = true;
+        this.polarGridVisible = false;
     }
 
     init(containerId) {
         try {
             this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(0x0f1419);
-
+            
+            // Blender-style background: dark gradient from top to bottom
+            const loader = new THREE.TextureLoader();
+            this.scene.background = new THREE.Color(0x1e1e1e); // Very dark gray like Blender
+            
             this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-            this.camera.position.set(6, 4, 6);
+            this.camera.position.set(7.36, 4.96, 6.93); // Default Blender camera position
             this.camera.lookAt(0, 0, 0);
 
-            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
             this.renderer.shadowMap.enabled = true;
             this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            this.renderer.toneMappingExposure = 1.0; // Blender-like exposure
+            
+            // Blender-style rendering settings
+            this.renderer.physicallyCorrectLights = true;
+            this.renderer.shadowMap.autoUpdate = true;
+            
+            // Blender-style rendering settings
+            this.renderer.physicallyCorrectLights = true;
+            this.renderer.shadowMap.autoUpdate = true;
 
             const viewport = document.getElementById(containerId);
             viewport.appendChild(this.renderer.domElement);
 
             this.setupLighting();
             this.setupControls();
-            this.setupAxes();
+            this.setupGridsAndAxes();
             this.resizeRenderer();
             this.animate();
 
-            console.log('🚀 Three.js initialized successfully');
+            console.log('🚀 Three.js initialized with Blender-style setup');
             return true;
         } catch (error) {
             console.error('❌ Three.js initialization error:', error.message);
@@ -42,80 +67,121 @@ class ThreeJSManager {
     }
 
     setupLighting() {
-        // Enhanced lighting for better visibility
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        // Blender-style lighting setup: clean and minimal
+        // Main ambient light (soft overall illumination)
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
         this.scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        directionalLight.position.set(10, 10, 5);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        directionalLight.shadow.camera.near = 0.1;
-        directionalLight.shadow.camera.far = 50;
-        directionalLight.shadow.camera.left = -10;
-        directionalLight.shadow.camera.right = 10;
-        directionalLight.shadow.camera.top = 10;
-        directionalLight.shadow.camera.bottom = -10;
-        this.scene.add(directionalLight);
+        // Key light (main directional light from top-right)
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        keyLight.position.set(10, 10, 5);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.camera.near = 0.1;
+        keyLight.shadow.camera.far = 50;
+        keyLight.shadow.camera.left = -20;
+        keyLight.shadow.camera.right = 20;
+        keyLight.shadow.camera.top = 20;
+        keyLight.shadow.camera.bottom = -20;
+        keyLight.shadow.bias = -0.0001;
+        this.scene.add(keyLight);
 
-        const pointLight = new THREE.PointLight(0x667eea, 1.0, 100);
-        pointLight.position.set(-10, 10, 10);
-        this.scene.add(pointLight);
-
-        const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.6);
-        fillLight.position.set(-5, -5, 5);
+        // Subtle fill light (opposite side, much weaker)
+        const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.3);
+        fillLight.position.set(-5, 3, -5);
         this.scene.add(fillLight);
+        
+        // Add Blender-style HDRI environment
+        this.setupEnvironment();
+    }
 
-        // Rim light for better definition
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.7);
-        rimLight.position.set(0, 0, -10);
-        this.scene.add(rimLight);
-
-        // Add ground plane for reference - smaller and less prominent
-        const groundGeometry = new THREE.PlaneGeometry(30, 30);
-        const groundMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x333333,
-            transparent: true,
-            opacity: 0.2
+    setupEnvironment() {
+        // Create a simple environment map for reflections
+        const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+        
+        // Create a simple gradient environment
+        const envScene = new THREE.Scene();
+        const envGeometry = new THREE.SphereGeometry(50, 32, 16);
+        const envMaterial = new THREE.MeshBasicMaterial({
+            color: 0x2a2a2a,
+            side: THREE.BackSide
         });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.y = -0.01;
-        ground.receiveShadow = true;
-        this.scene.add(ground);
+        const envSphere = new THREE.Mesh(envGeometry, envMaterial);
+        envScene.add(envSphere);
+        
+        const envMap = pmremGenerator.fromScene(envScene).texture;
+        this.scene.environment = envMap;
+        
+        // Clean up
+        pmremGenerator.dispose();
+        envScene.clear();
     }
 
     setupControls() {
         let mouseDown = false;
+        let rightMouseDown = false;
         let mouseX = 0;
         let mouseY = 0;
+        let panSpeed = 0.002;
+        let rotateSpeed = 0.01;
+        let zoomSpeed = 0.02;
 
         const canvas = this.renderer.domElement;
 
+        // Blender-style controls
         canvas.addEventListener('mousedown', (event) => {
-            mouseDown = true;
+            event.preventDefault();
+            if (event.button === 0) { // Left mouse button - orbit
+                mouseDown = true;
+            } else if (event.button === 2) { // Right mouse button - pan
+                rightMouseDown = true;
+            }
             mouseX = event.clientX;
             mouseY = event.clientY;
         });
 
-        canvas.addEventListener('mouseup', () => {
+        canvas.addEventListener('mouseup', (event) => {
             mouseDown = false;
+            rightMouseDown = false;
+        });
+
+        canvas.addEventListener('contextmenu', (event) => {
+            event.preventDefault(); // Disable right-click context menu
         });
 
         canvas.addEventListener('mousemove', (event) => {
-            if (mouseDown) {
+            if (mouseDown || rightMouseDown) {
                 const deltaX = event.clientX - mouseX;
                 const deltaY = event.clientY - mouseY;
 
-                const spherical = new THREE.Spherical();
-                spherical.setFromVector3(this.camera.position);
-                spherical.theta -= deltaX * 0.01;
-                spherical.phi += deltaY * 0.01;
-                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                if (mouseDown) {
+                    // Orbit camera around target (Blender-style rotation)
+                    const spherical = new THREE.Spherical();
+                    spherical.setFromVector3(this.camera.position);
+                    spherical.theta -= deltaX * rotateSpeed;
+                    spherical.phi += deltaY * rotateSpeed;
+                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
 
-                this.camera.position.setFromSpherical(spherical);
-                this.camera.lookAt(0, 0, 0);
+                    this.camera.position.setFromSpherical(spherical);
+                    this.camera.lookAt(0, 0, 0);
+                } else if (rightMouseDown) {
+                    // Pan camera (Blender-style middle mouse)
+                    const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+                    const panX = -deltaX * panSpeed * distance;
+                    const panY = deltaY * panSpeed * distance;
+                    
+                    // Get camera's local axes
+                    const right = new THREE.Vector3();
+                    const up = new THREE.Vector3();
+                    this.camera.getWorldDirection(right);
+                    right.cross(this.camera.up).normalize();
+                    up.copy(this.camera.up);
+                    
+                    // Move camera position
+                    this.camera.position.addScaledVector(right, panX);
+                    this.camera.position.addScaledVector(up, panY);
+                }
 
                 mouseX = event.clientX;
                 mouseY = event.clientY;
@@ -124,18 +190,159 @@ class ThreeJSManager {
 
         canvas.addEventListener('wheel', (event) => {
             event.preventDefault();
+            
+            // Blender-style zoom towards cursor
             const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
-            const newDistance = distance + event.deltaY * 0.01;
-            const clampedDistance = Math.max(1, Math.min(50, newDistance));
+            const zoomDelta = event.deltaY * zoomSpeed;
+            const newDistance = distance + zoomDelta;
+            const clampedDistance = Math.max(0.5, Math.min(100, newDistance));
             
             this.camera.position.normalize().multiplyScalar(clampedDistance);
         });
+
+        // Add keyboard shortcuts for Blender-style navigation
+        document.addEventListener('keydown', (event) => {
+            // Numpad navigation like Blender
+            switch(event.code) {
+                case 'Numpad7': // Top view
+                    this.camera.position.set(0, 10, 0);
+                    this.camera.lookAt(0, 0, 0);
+                    event.preventDefault();
+                    break;
+                case 'Numpad1': // Front view
+                    this.camera.position.set(0, 0, 10);
+                    this.camera.lookAt(0, 0, 0);
+                    event.preventDefault();
+                    break;
+                case 'Numpad3': // Right view
+                    this.camera.position.set(10, 0, 0);
+                    this.camera.lookAt(0, 0, 0);
+                    event.preventDefault();
+                    break;
+            }
+        });
     }
 
-    setupAxes() {
+    setupGridsAndAxes() {
+        // Blender-style axes helper (smaller and more subtle)
         this.axesHelper = new THREE.AxesHelper(3);
-        this.axesHelper.visible = true;
+        this.axesHelper.visible = this.axesVisible;
         this.scene.add(this.axesHelper);
+
+        // Create infinite grid shader (Blender-style)
+        this.createInfiniteGrid();
+        
+        // Optional traditional grids (hidden by default)
+        this.createOptionalGrids();
+    }
+
+    createInfiniteGrid() {
+        // Blender-style infinite grid shader
+        const vertexShader = `
+            varying vec3 vWorldPosition;
+            varying vec3 vPosition;
+            
+            void main() {
+                vPosition = position;
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vWorldPosition = worldPosition.xyz;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec3 vWorldPosition;
+            varying vec3 vPosition;
+            uniform float uTime;
+            uniform vec3 uCameraPosition;
+            
+            float getGrid(vec2 coords, float scale) {
+                vec2 grid = abs(fract(coords * scale - 0.5) - 0.5) / fwidth(coords * scale);
+                float line = min(grid.x, grid.y);
+                return 1.0 - min(line, 1.0);
+            }
+            
+            void main() {
+                float distanceToCamera = distance(vWorldPosition, uCameraPosition);
+                
+                // Main grid (1.0 unit spacing) - matches Blender's default scale better
+                float grid1 = getGrid(vWorldPosition.xz, 1.0);
+                
+                // Fine grid (0.1 unit spacing) - only visible when close
+                float grid01 = getGrid(vWorldPosition.xz, 10.0);
+                float fineGridFade = 1.0 - smoothstep(2.0, 8.0, distanceToCamera);
+                grid01 *= fineGridFade;
+                
+                // Coarse grid (10 unit spacing) - more subtle, less contrast
+                float grid10 = getGrid(vWorldPosition.xz, 0.1);
+                
+                // Combine grids with more balanced intensities - reduced contrast
+                float finalGrid = grid1 * 0.4 + grid01 * 0.15 + grid10 * 0.5;
+                
+                // Much gentler distance-based fade - less aggressive fade-off like Blender
+                float fade = 1.0 - smoothstep(50.0, 300.0, distanceToCamera);
+                finalGrid *= fade;
+                
+                // Axis lines (X and Z axes)
+                float axisX = 1.0 - smoothstep(0.0, 0.02, abs(vWorldPosition.z));
+                float axisZ = 1.0 - smoothstep(0.0, 0.02, abs(vWorldPosition.x));
+                
+                // Axis colors (red for X, blue for Z)
+                vec3 axisColorX = vec3(0.8, 0.2, 0.2) * axisX;
+                vec3 axisColorZ = vec3(0.2, 0.2, 0.8) * axisZ;
+                
+                // Grid color (lighter, more subtle gray like Blender)
+                vec3 gridColor = vec3(0.3, 0.3, 0.3) * finalGrid;
+                
+                // Combine colors
+                vec3 finalColor = gridColor + axisColorX + axisColorZ;
+                
+                // Alpha based on grid intensity and distance
+                float alpha = max(finalGrid, max(axisX, axisZ)) * fade;
+                
+                gl_FragColor = vec4(finalColor, alpha);
+            }
+        `;
+
+        // Create infinite plane geometry
+        const geometry = new THREE.PlaneGeometry(1000, 1000);
+        
+        const material = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                uTime: { value: 0 },
+                uCameraPosition: { value: new THREE.Vector3() }
+            },
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+        this.infiniteGrid = new THREE.Mesh(geometry, material);
+        this.infiniteGrid.rotation.x = -Math.PI / 2;
+        this.infiniteGrid.position.y = 0;
+        this.infiniteGrid.renderOrder = -1; // Render behind other objects
+        this.scene.add(this.infiniteGrid);
+        
+        // Store reference to update camera position
+        this.gridMaterial = material;
+    }
+
+    createOptionalGrids() {
+        // Traditional grid helper (hidden by default)
+        this.gridHelper = new THREE.GridHelper(20, 20, 0x3d3d3d, 0x2a2a2a);
+        this.gridHelper.visible = false; // Hidden by default
+        this.gridHelper.material.opacity = 0.3;
+        this.gridHelper.material.transparent = true;
+        this.scene.add(this.gridHelper);
+
+        // Polar grid helper (hidden by default)
+        this.polarGridHelper = new THREE.PolarGridHelper(10, 16, 8, 64, 0x3d3d3d, 0x2a2a2a);
+        this.polarGridHelper.visible = false;
+        this.polarGridHelper.material.opacity = 0.2;
+        this.polarGridHelper.material.transparent = true;
+        this.scene.add(this.polarGridHelper);
     }
 
     resizeRenderer() {
@@ -150,6 +357,12 @@ class ThreeJSManager {
 
     animate() {
         requestAnimationFrame(() => this.animate());
+
+        // Update grid shader uniforms
+        if (this.gridMaterial) {
+            this.gridMaterial.uniforms.uCameraPosition.value.copy(this.camera.position);
+            this.gridMaterial.uniforms.uTime.value += 0.01;
+        }
 
         if (this.animationEnabled && this.modelBuilder.getCurrentModel()) {
             this.modelBuilder.getCurrentModel().rotation.y += 0.01;
@@ -178,7 +391,8 @@ class ThreeJSManager {
             );
             this.camera.lookAt(center);
         } else {
-            this.camera.position.set(6, 4, 6);
+            // Blender's default camera position
+            this.camera.position.set(7.36, 4.96, 6.93);
             this.camera.lookAt(0, 0, 0);
         }
     }
@@ -195,8 +409,41 @@ class ThreeJSManager {
     }
 
     toggleAxes() {
-        this.axesHelper.visible = !this.axesHelper.visible;
-        return this.axesHelper.visible;
+        this.axesVisible = !this.axesVisible;
+        this.axesHelper.visible = this.axesVisible;
+        return this.axesVisible;
+    }
+
+    toggleGrid() {
+        this.gridVisible = !this.gridVisible;
+        if (this.infiniteGrid) {
+            this.infiniteGrid.visible = this.gridVisible;
+        }
+        return this.gridVisible;
+    }
+
+    togglePolarGrid() {
+        this.polarGridVisible = !this.polarGridVisible;
+        if (this.polarGridHelper) {
+            this.polarGridHelper.visible = this.polarGridVisible;
+        }
+        return this.polarGridVisible;
+    }
+
+    toggleXYGrid() {
+        if (this.xyGridHelper) {
+            this.xyGridHelper.visible = !this.xyGridHelper.visible;
+            return this.xyGridHelper.visible;
+        }
+        return false;
+    }
+
+    toggleYZGrid() {
+        if (this.yzGridHelper) {
+            this.yzGridHelper.visible = !this.yzGridHelper.visible;
+            return this.yzGridHelper.visible;
+        }
+        return false;
     }
 
     buildModel(code) {
@@ -221,6 +468,9 @@ class ThreeJSManager {
                 // Update axes helper size
                 this.axesHelper.scale.setScalar(Math.max(maxSize * 0.2, 0.5));
                 
+                // Update grid size based on model size
+                this.updateGridScale(maxSize);
+                
                 this.modelBuilder.updateWireframe(this.wireframeMode);
                 
                 console.log(`📹 Camera at distance: ${cameraDistance.toFixed(2)}, model size: ${maxSize.toFixed(2)}`);
@@ -230,6 +480,33 @@ class ThreeJSManager {
             }
         } catch (error) {
             throw error;
+        }
+    }
+
+    updateGridScale(modelSize) {
+        // The infinite grid automatically scales, but we can adjust the traditional grids if needed
+        if (this.gridHelper) {
+            // Update traditional grid size if visible
+            const gridSize = Math.max(modelSize * 2, 20);
+            const gridDivisions = Math.max(Math.floor(gridSize), 20);
+            
+            this.scene.remove(this.gridHelper);
+            this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x3d3d3d, 0x2a2a2a);
+            this.gridHelper.visible = false; // Keep hidden by default
+            this.gridHelper.material.opacity = 0.3;
+            this.gridHelper.material.transparent = true;
+            this.scene.add(this.gridHelper);
+        }
+        
+        // Update polar grid as well
+        if (this.polarGridHelper) {
+            const gridSize = Math.max(modelSize * 2, 20);
+            this.scene.remove(this.polarGridHelper);
+            this.polarGridHelper = new THREE.PolarGridHelper(gridSize/2, 16, 8, 64, 0x3d3d3d, 0x2a2a2a);
+            this.polarGridHelper.visible = false;
+            this.polarGridHelper.material.opacity = 0.2;
+            this.polarGridHelper.material.transparent = true;
+            this.scene.add(this.polarGridHelper);
         }
     }
 
@@ -252,14 +529,9 @@ class ThreeJSManager {
             // Parse STL data
             const geometry = this.parseSTL(stlData);
             
-            // Create material
-            const material = new THREE.MeshPhongMaterial({ 
-                color: 0x222222,
-                transparent: false,
-                opacity: 1.0,
-                shininess: 5,
-                side: THREE.DoubleSide
-            });
+            // Create material using Blender default style
+            const material = createBlenderMaterial();
+            material.side = THREE.DoubleSide;  // Ensure both sides are rendered for STL
             
             // Create mesh
             const mesh = new THREE.Mesh(geometry, material);

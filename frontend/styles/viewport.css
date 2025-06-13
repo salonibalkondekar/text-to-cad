@@ -1,5 +1,6 @@
-/* Viewport Styles */
-#main-content {
+/* Viewport Styles - Professional 3D Software Interface */
+
+.main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -11,8 +12,9 @@
 .viewport {
     height: 100%;
     position: relative;
-    background: #0f1419;
+    background: linear-gradient(to bottom, #393939 0%, #2a2a2a 50%, #1e1e1e 100%);
     overflow: hidden;
+    border: 1px solid #3d3d3d;
 }
 
 .viewport canvas {
@@ -21,14 +23,345 @@
     display: block;
 }
 
-.animation-controls {
+/* Viewport Overlay - Contains all UI elements */
+.viewport-overlay {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0,0,0,0.8);
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.1);
-    font-size: 12px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
     z-index: 10;
-} 
+}
+
+/* Top Toolbar - View and Display Controls */
+.viewport-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: auto;
+    gap: 20px;
+}
+
+.view-controls, .display-controls, .status-indicators {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(245, 245, 240, 0.05);
+    backdrop-filter: blur(10px);
+}
+
+.status-indicators {
+    background: rgba(20, 20, 20, 0.85);
+    border-color: rgba(245, 245, 240, 0.03);
+}
+
+.view-btn, .display-btn {
+    background: rgba(245, 245, 240, 0.08);
+    border: 1px solid rgba(245, 245, 240, 0.15);
+    color: #e0e0e0;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.view-btn:hover, .display-btn:hover {
+    background: rgba(245, 245, 240, 0.15);
+    border-color: rgba(245, 245, 240, 0.3);
+    transform: none;
+}
+
+.display-btn.active {
+    background: rgba(160, 160, 160, 0.4);
+    border-color: rgba(160, 160, 160, 0.6);
+    color: white;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Bottom Info Panel */
+.viewport-info {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 245, 240, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.coordinates-display, .view-info {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 11px;
+    color: #b0b0b0;
+    letter-spacing: 0.5px;
+}
+
+.view-info {
+    color: #888;
+}
+
+/* Navigation Cube - Blender Style */
+.navigation-cube {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    width: 70px;
+    height: 70px;
+    pointer-events: auto;
+    perspective: 200px;
+    transform-style: preserve-3d;
+}
+
+.cube-face {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: rgba(40, 40, 40, 0.9);
+    border: 1px solid rgba(245, 245, 240, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    border-radius: 2px;
+}
+
+.cube-face:hover {
+    background: rgba(80, 80, 80, 0.9);
+    border-color: rgba(245, 245, 240, 0.4);
+    transform: scale(1.03);
+    box-shadow: 0 0 8px rgba(245, 245, 240, 0.2);
+}
+
+/* Cube face positioning - simplified 2D layout for easier interaction */
+.cube-face.front {
+    top: 17px;
+    left: 17px;
+    z-index: 6;
+}
+
+.cube-face.right {
+    top: 17px;
+    right: 0;
+    z-index: 5;
+}
+
+.cube-face.top {
+    top: 0;
+    left: 17px;
+    z-index: 4;
+}
+
+.cube-face.left {
+    top: 17px;
+    left: 0;
+    z-index: 3;
+}
+
+.cube-face.back {
+    top: 34px;
+    left: 17px;
+    z-index: 2;
+    opacity: 0.7;
+}
+
+.cube-face.bottom {
+    top: 34px;
+    right: 0;
+    z-index: 1;
+    opacity: 0.7;
+    font-size: 8px;
+}
+
+/* Scale Reference - Professional CAD style scale indicator */
+.scale-reference {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scale-line {
+    width: 60px;
+    height: 2px;
+    background: #f5f5f0;
+    position: relative;
+}
+
+.scale-line::before,
+.scale-line::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 8px;
+    background: #f5f5f0;
+    top: -3px;
+}
+
+.scale-line::before {
+    left: 0;
+}
+
+.scale-line::after {
+    right: 0;
+}
+
+.scale-text {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 10px;
+    color: #e0e0e0;
+    white-space: nowrap;
+}
+
+/* Measurement Tool Overlay */
+.measurement-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 193, 7, 0.9);
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+    border: 2px solid #ffc107;
+    animation: measurementPulse 2s infinite;
+}
+
+@keyframes measurementPulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.6; }
+}
+
+.measurement-line {
+    position: absolute;
+    background: #ff4444;
+    height: 2px;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.measurement-point {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ff4444;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 16;
+    pointer-events: none;
+}
+
+.measurement-label {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: #f5f5f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    pointer-events: none;
+    z-index: 17;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .viewport-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .view-controls, .display-controls {
+        justify-content: center;
+    }
+    
+    .navigation-cube {
+        width: 60px;
+        height: 60px;
+        top: 60px;
+        right: 10px;
+    }
+    
+    .cube-face {
+        width: 45px;
+        height: 45px;
+        font-size: 10px;
+    }
+    
+    .viewport-info {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+}
+
+/* Grid fade effect when camera is close */
+.viewport.grid-fade .grid-helper {
+    opacity: 0.3;
+}
+
+/* Loading indicator for 3D scene */
+.viewport.loading::before {
+    content: "Loading 3D Scene...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #888;
+    font-size: 14px;
+    z-index: 5;
+}
+
+/* Professional scrollbars for any overflow */
+.viewport *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.viewport *::-webkit-scrollbar-track {
+    background: rgba(245, 245, 240, 0.05);
+    border-radius: 3px;
+}
+
+.viewport *::-webkit-scrollbar-thumb {
+    background: rgba(245, 245, 240, 0.2);
+    border-radius: 3px;
+}
+
+.viewport *::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 245, 240, 0.3);
+}

@@ -155,7 +155,7 @@ mugOuter.mesh.position.y = height / 2;
 // Create hollow interior (for visualization, shown as darker cylinder)
 const mugInner = cad.cylinder(radius - wallThickness, height - wallThickness);
 mugInner.mesh.position.y = height / 2 + wallThickness / 2;
-mugInner.mesh.material.color.setHex(0x333333);
+mugInner.mesh.material.color.setHex(0x888888);  // Medium gray for interior
 mugInner.mesh.material.transparent = true;
 mugInner.mesh.material.opacity = 0.7;
 
@@ -268,7 +268,7 @@ ${hasHole ? `
 const centerHole = cad.cylinder(${holeRadius}, ${thickness * 1.2});
 // In real CAD: model = model.subtract(centerHole);
 // For visualization, we'll show the hole as a darker cylinder
-centerHole.mesh.material.color.setHex(0x333333);
+centerHole.mesh.material.color.setHex(0x666666);  // Medium dark gray for holes
 centerHole.mesh.material.transparent = true;
 centerHole.mesh.material.opacity = 0.8;
 model = model.union(centerHole);
@@ -276,7 +276,7 @@ model = model.union(centerHole);
 // Add keyway for shaft connection
 const keyway = cad.cube(${holeRadius * 0.3}, ${holeRadius * 2}, ${thickness * 1.1});
 keyway.mesh.position.x = ${holeRadius * 0.65};
-keyway.mesh.material.color.setHex(0x222222);
+keyway.mesh.material.color.setHex(0x444444);  // Dark gray for keyway
 keyway.mesh.material.transparent = true;
 keyway.mesh.material.opacity = 0.9;
 model = model.union(keyway);

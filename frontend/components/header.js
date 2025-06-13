@@ -31,6 +31,8 @@ class HeaderComponent {
                     <button id="wireframe">📐 Wireframe</button>
                     <button id="animate">🎬 Animate</button>
                     <button id="axes" class="active">📍 Axes</button>
+                    <button id="grid" class="active">⊞ Grid</button>
+                    <button id="polarGrid">⊚ Polar</button>
                 </div>
             </div>
         `;
@@ -73,6 +75,20 @@ class HeaderComponent {
             const axesVisible = this.threeManager.toggleAxes();
             e.target.classList.toggle('active', axesVisible);
             console.log(`📍 Axes: ${axesVisible ? 'ON' : 'OFF'}`);
+        });
+
+        // Grid toggle
+        document.getElementById('grid').addEventListener('click', (e) => {
+            const gridVisible = this.threeManager.toggleGrid();
+            e.target.classList.toggle('active', gridVisible);
+            console.log(`⊞ Grid: ${gridVisible ? 'ON' : 'OFF'}`);
+        });
+
+        // Polar grid toggle
+        document.getElementById('polarGrid').addEventListener('click', (e) => {
+            const polarVisible = this.threeManager.togglePolarGrid();
+            e.target.classList.toggle('active', polarVisible);
+            console.log(`⊚ Polar Grid: ${polarVisible ? 'ON' : 'OFF'}`);
         });
     }
 

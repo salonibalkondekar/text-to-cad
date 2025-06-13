@@ -62,7 +62,7 @@ mugOuter.mesh.position.y = height / 2;
 
 const mugInner = cad.cylinder(radius - wallThickness, height - wallThickness);
 mugInner.mesh.position.y = height / 2 + wallThickness / 2;
-mugInner.mesh.material.color.setHex(0x333333);
+mugInner.mesh.material.color.setHex(0x888888);  // Medium gray for inner cavity
 mugInner.mesh.material.transparent = true;
 mugInner.mesh.material.opacity = 0.7;
 
@@ -91,7 +91,7 @@ const hub = cad.cylinder(pitchRadius * 0.6, thickness * 1.1);
 
 // Center hole
 const centerHole = cad.cylinder(pitchRadius * 0.25, thickness * 1.2);
-centerHole.mesh.material.color.setHex(0x333333);
+centerHole.mesh.material.color.setHex(0x666666);  // Darker gray for contrast
 centerHole.mesh.material.transparent = true;
 centerHole.mesh.material.opacity = 0.8;
 
@@ -113,16 +113,16 @@ for (let i = 0; i < teeth; i++) {
     mechanicalBearing: `// Professional CAD Example - Mechanical Bearing
 const outerRing = cad.cylinder(2, 0.5);
 const innerRing = cad.cylinder(1.2, 0.6);
-innerRing.mesh.material.color.setHex(0x444444);
+innerRing.mesh.material.color.setHex(0x999999);  // Medium gray for inner ring
 
 // Ball race grooves (approximated)
 const groove1 = cad.torus(1.6, 0.1);
 groove1.mesh.position.y = 0.15;
-groove1.mesh.material.color.setHex(0x888888);
+groove1.mesh.material.color.setHex(0xaaaaaa);  // Light gray for grooves
 
 const groove2 = cad.torus(1.6, 0.1);
 groove2.mesh.position.y = -0.15;
-groove2.mesh.material.color.setHex(0x888888);
+groove2.mesh.material.color.setHex(0xaaaaaa);  // Light gray for grooves
 
 const model = outerRing.union(innerRing).union(groove1).union(groove2);`,
 

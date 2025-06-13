@@ -391,7 +391,7 @@ class SidebarComponent {
             usageNotice.style.display = 'none';
             generateBtn.disabled = false;
             promptInput.disabled = false;
-            promptInput.placeholder = `Describe the 3D model you want to create... (${authState.remaining} models remaining)`;
+            promptInput.placeholder = `Describe the 3D model you want to create... (${authState.remaining} more generations left :)`;
         }
     }
 }
