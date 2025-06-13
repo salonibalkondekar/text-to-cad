@@ -5,23 +5,125 @@
     left: 0;
     right: 0;
     height: 60px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
     display: flex;
     align-items: center;
     padding: 0 20px;
     z-index: 1000;
+    border-bottom: 1px solid #3d3d3d;
 }
 
 .logo {
     font-size: 24px;
     font-weight: bold;
-    color: white;
+    color: #f5f5f0;
 }
 
 .tagline {
     margin-left: 15px;
     font-size: 14px;
     opacity: 0.9;
+    flex: 1;
+}
+
+/* User Authentication Section */
+.user-section {
+    margin-right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.auth-loading {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(245, 245, 240, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 245, 240, 0.2);
+}
+
+.user-avatar img {
+    border-radius: 50%;
+    border: 2px solid rgba(245, 245, 240, 0.3);
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f5f5f0;
+}
+
+.user-usage {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.usage-bar {
+    width: 60px;
+    height: 4px;
+    background: rgba(245, 245, 240, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.usage-fill {
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.usage-text {
+    font-size: 10px;
+    color: rgba(245, 245, 240, 0.8);
+    white-space: nowrap;
+}
+
+.sign-in-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sign-in-btn:hover {
+    background: #e8e8e0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sign-out-btn {
+    background: rgba(245, 245, 240, 0.2);
+    border: 1px solid rgba(245, 245, 240, 0.3);
+    color: #f5f5f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sign-out-btn:hover {
+    background: rgba(245, 245, 240, 0.3);
 }
 
 .toolbar {
@@ -31,9 +133,9 @@
 }
 
 .toolbar button {
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
+    background: rgba(245,245,240,0.2);
+    border: 1px solid rgba(245,245,240,0.3);
+    color: #f5f5f0;
     padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
@@ -42,9 +144,9 @@
 }
 
 .toolbar button:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(245,245,240,0.3);
 }
 
 .toolbar button.active {
-    background: rgba(255,255,255,0.4);
+    background: rgba(245,245,240,0.4);
 } 

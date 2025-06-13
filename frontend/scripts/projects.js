@@ -62,7 +62,7 @@ mugOuter.mesh.position.y = height / 2;
 
 const mugInner = cad.cylinder(radius - wallThickness, height - wallThickness);
 mugInner.mesh.position.y = height / 2 + wallThickness / 2;
-mugInner.mesh.material.color.setHex(0x333333);
+mugInner.mesh.material.color.setHex(0x888888);  // Medium gray for inner cavity
 mugInner.mesh.material.transparent = true;
 mugInner.mesh.material.opacity = 0.7;
 
@@ -91,7 +91,7 @@ const hub = cad.cylinder(pitchRadius * 0.6, thickness * 1.1);
 
 // Center hole
 const centerHole = cad.cylinder(pitchRadius * 0.25, thickness * 1.2);
-centerHole.mesh.material.color.setHex(0x333333);
+centerHole.mesh.material.color.setHex(0x666666);  // Darker gray for contrast
 centerHole.mesh.material.transparent = true;
 centerHole.mesh.material.opacity = 0.8;
 
@@ -113,16 +113,16 @@ for (let i = 0; i < teeth; i++) {
     mechanicalBearing: `// Professional CAD Example - Mechanical Bearing
 const outerRing = cad.cylinder(2, 0.5);
 const innerRing = cad.cylinder(1.2, 0.6);
-innerRing.mesh.material.color.setHex(0x444444);
+innerRing.mesh.material.color.setHex(0x999999);  // Medium gray for inner ring
 
 // Ball race grooves (approximated)
 const groove1 = cad.torus(1.6, 0.1);
 groove1.mesh.position.y = 0.15;
-groove1.mesh.material.color.setHex(0x888888);
+groove1.mesh.material.color.setHex(0xaaaaaa);  // Light gray for grooves
 
 const groove2 = cad.torus(1.6, 0.1);
 groove2.mesh.position.y = -0.15;
-groove2.mesh.material.color.setHex(0x888888);
+groove2.mesh.material.color.setHex(0xaaaaaa);  // Light gray for grooves
 
 const model = outerRing.union(innerRing).union(groove1).union(groove2);`,
 
@@ -177,162 +177,5 @@ const tipLength = diameter * 0.5;
 const tip = cad.cylinder(diameter / 4, tipLength, 8);
 tip.mesh.position.y = -length / 2 - tipLength / 2;
 
-const model = boltHead.union(shank).union(threadedSection).union(tip);`,
-
-    // Three.js Playground Examples
-    threeBasic: `// Basic Three.js Example - Spinning Cube
-const geometry = new THREE.BoxGeometry(2, 2, 2);
-const material = new THREE.MeshStandardMaterial({ color: 'hotpink' });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
-
-// Animation loop
-function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-}
-animate();`,
-
-    threeLights: `// Three.js Lighting Demo
-// Create multiple colored cubes
-const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
-const cubes = [];
-
-for (let i = 0; i < 5; i++) {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({ color: colors[i] });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.position.x = (i - 2) * 2;
-    cube.castShadow = true;
-    scene.add(cube);
-    cubes.push(cube);
-}
-
-// Add a moving light
-const light = new THREE.PointLight(0xffffff, 2, 100);
-light.position.set(0, 5, 0);
-light.castShadow = true;
-scene.add(light);
-
-// Animate cubes and light
-function animate() {
-    requestAnimationFrame(animate);
-    const time = Date.now() * 0.001;
-    
-    cubes.forEach((cube, i) => {
-        cube.rotation.y = time + i;
-        cube.position.y = Math.sin(time + i) * 0.5;
-    });
-    
-    light.position.x = Math.sin(time) * 5;
-    light.position.z = Math.cos(time) * 5;
-}
-animate();`,
-
-    threeParticles: `// Three.js Particle System
-const particleCount = 1000;
-const particles = new THREE.BufferGeometry();
-const positions = new Float32Array(particleCount * 3);
-
-for (let i = 0; i < particleCount * 3; i++) {
-    positions[i] = (Math.random() - 0.5) * 10;
-}
-
-particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-const material = new THREE.PointsMaterial({
-    color: 0x88ccff,
-    size: 0.1
-});
-
-const particleSystem = new THREE.Points(particles, material);
-scene.add(particleSystem);
-
-// Animate particles
-function animate() {
-    requestAnimationFrame(animate);
-    particleSystem.rotation.y += 0.01;
-    
-    const positions = particleSystem.geometry.attributes.position.array;
-    for (let i = 1; i < positions.length; i += 3) {
-        positions[i] += Math.sin(Date.now() * 0.001 + i) * 0.01;
-    }
-    particleSystem.geometry.attributes.position.needsUpdate = true;
-}
-animate();`,
-
-    threeGeometry: `// Three.js Custom Geometry
-// Create a custom shape using vertices
-const geometry = new THREE.BufferGeometry();
-const vertices = new Float32Array([
-    // Triangle 1
-    -1, -1, 0,
-     1, -1, 0,
-     0,  1, 0,
-    // Triangle 2 (back face)
-    -1, -1, -0.5,
-     0,  1, -0.5,
-     1, -1, -0.5,
-]);
-
-geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-geometry.computeVertexNormals();
-
-const material = new THREE.MeshStandardMaterial({ 
-    color: 0x00ff88,
-    side: THREE.DoubleSide
-});
-
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
-
-// Add wireframe version
-const wireframe = new THREE.WireframeGeometry(geometry);
-const line = new THREE.LineSegments(wireframe, 
-    new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true })
-);
-scene.add(line);
-
-// Animate
-function animate() {
-    requestAnimationFrame(animate);
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
-    line.rotation.x += 0.01;
-    line.rotation.y += 0.02;
-}
-animate();`
-};
-
-// Example prompts for AI generation
-const examplePrompts = [
-    {
-        text: "☕ Coffee mug with handle",
-        prompt: "Create a coffee mug with a handle"
-    },
-    {
-        text: "⚙️ Gear with 12 teeth",
-        prompt: "Design a gear with 12 teeth and a center hole"
-    },
-    {
-        text: "🪑 Simple table with legs",
-        prompt: "Make a simple table with 4 legs"
-    },
-    {
-        text: "🏠 House with roof",
-        prompt: "Build a house with walls and a triangular roof"
-    },
-    {
-        text: "🔩 Bolt and nut assembly",
-        prompt: "Create a bolt and nut that fit together"
-    },
-    {
-        text: "🪜 Staircase with steps",
-        prompt: "Make a staircase height 200mm and width 150mm"
-    },
-    {
-        text: "📱 Phone case",
-        prompt: "Design a smartphone case with rounded corners"
-    }
-]; 
+const model = boltHead.union(shank).union(threadedSection).union(tip);`
+}; 

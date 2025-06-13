@@ -7,8 +7,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1a1a1a;
-    color: #ffffff;
+    background: #0f0f0f;
+    color: #f5f5f0;
     overflow: hidden;
 }
 
@@ -27,9 +27,9 @@ body {
     display: inline-block;
     width: 12px;
     height: 12px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(245, 245, 240, 0.3);
     border-radius: 50%;
-    border-top-color: white;
+    border-top-color: #f5f5f0;
     animation: spin 1s ease-in-out infinite;
 }
 
@@ -39,9 +39,9 @@ body {
 
 /* Button Styles */
 button {
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
+    background: rgba(245, 245, 240, 0.15);
+    border: 1px solid rgba(245, 245, 240, 0.25);
+    color: #f5f5f0;
     padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
@@ -50,11 +50,11 @@ button {
 }
 
 button:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(245, 245, 240, 0.25);
 }
 
 button.active {
-    background: rgba(255,255,255,0.4);
+    background: rgba(245, 245, 240, 0.35);
 }
 
 button:disabled {

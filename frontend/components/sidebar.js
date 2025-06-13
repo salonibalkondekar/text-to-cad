@@ -5,6 +5,7 @@ class SidebarComponent {
         this.aiGenerator = aiGenerator;
         this.threeManager = threeManager;
         this.consoleComponent = consoleComponent;
+        this.authState = null;
     }
 
     render() {
@@ -22,6 +23,18 @@ class SidebarComponent {
                     <!-- AI Prompt Section -->
                     <div class="ai-prompt-section">
                         <div class="section-title" style="color: white; margin-bottom: 15px;">🤖 AI Model Generator</div>
+                        <div class="auth-notice" id="authNotice" style="display: none;">
+                            <div class="notice-content">
+                                <span class="notice-icon">📧</span>
+                                <span class="notice-text">Enter your email to generate AI models</span>
+                            </div>
+                        </div>
+                        <div class="usage-notice" id="usageNotice" style="display: none;">
+                            <div class="notice-content">
+                                <span class="notice-icon">⚠️</span>
+                                <span class="notice-text">Model generation limit reached (10/10)</span>
+                            </div>
+                        </div>
                         <textarea class="prompt-input" id="promptInput" placeholder="Describe the 3D model you want to create..."></textarea>
                         <button class="generate-button" id="generateModel">
                             <span id="generateText">🚀 Generate 3D Model</span>
@@ -31,32 +44,11 @@ class SidebarComponent {
                     <!-- Generated CAD Code Section -->
                     <div class="code-section">
                         <div class="section-title">💻 Generated CAD Code</div>
-                        <div class="mode-indicator" id="modeIndicator">
-                            <span class="mode-badge" id="modeBadge">🔧 CAD Mode</span>
-                            <span class="mode-description" id="modeDescription">Using CSG operations (cad.cube, cad.cylinder, etc.)</span>
-                        </div>
                         <textarea class="code-editor" id="codeEditor">${projects.basicShapes}</textarea>
-                        <button class="build-button" id="buildModel">🔨 BUILD MODEL</button>
-                    </div>
-
-                    <!-- Pre-defined Examples - Collapsible -->
-                    <div class="predefined-examples-section">
-                        <div class="section-title collapsible-header" id="predefinedExamplesToggle">
-                            <span class="toggle-arrow">▶</span>
-                            <span>📁 Pre-defined Examples</span>
+                        <div class="button-row">
+                            <button class="build-button" id="buildModel">🔨 BUILD MODEL</button>
+                            <button class="download-button" id="downloadModelSTL">💾 Download STL</button>
                         </div>
-                        <div class="collapsible-content" id="predefinedExamplesContainer" style="display: none;">
-                            <div id="projectsContainer"></div>
-                        </div>
-                    </div>
-
-                    <!-- Collapsible Example Prompts - Moved to bottom -->
-                    <div class="example-prompts-section">
-                        <div class="section-title collapsible-header" id="examplePromptsToggle">
-                            <span class="toggle-arrow">▶</span>
-                            <span>💡 Example Prompts</span>
-                        </div>
-                        <div class="collapsible-content" id="examplePromptsContainer" style="display: none;"></div>
                     </div>
                 </div>
 
@@ -66,45 +58,9 @@ class SidebarComponent {
         `;
         
         document.getElementById('sidebar').innerHTML = sidebarHTML;
-        this.renderExamplePrompts();
-        this.renderProjects();
         this.attachEventListeners();
         this.initializeResizers();
-        
-        // Initialize mode indicator
-        this.updateModeIndicator();
-    }
-
-    renderExamplePrompts() {
-        const container = document.getElementById('examplePromptsContainer');
-        container.innerHTML = examplePrompts.map(example => 
-            `<div class="example-prompt" data-prompt="${example.prompt}">${example.text}</div>`
-        ).join('');
-    }
-
-    renderProjects() {
-        const projectItems = [
-            // BadCAD Examples
-            { key: 'badcadCross', icon: '➕', name: 'BadCAD: Cross Shape' },
-            { key: 'badcadSimpleBox', icon: '📦', name: 'BadCAD: Simple Box' },
-            { key: 'badcadCylinder', icon: '🔵', name: 'BadCAD: Cylinder with Hole' },
-            { key: 'badcadGear', icon: '⚙️', name: 'BadCAD: Simple Gear' },
-            // Three.js CAD Examples
-            { key: 'basicShapes', icon: '🔲', name: 'Three.js: Basic Shapes' },
-            { key: 'coffeeMug', icon: '☕', name: 'Three.js: Professional Mug' },
-            { key: 'professionalGear', icon: '⚙️', name: 'Three.js: Professional Gear' },
-            { key: 'mechanicalBearing', icon: '⚙️', name: 'Three.js: Mechanical Bearing' },
-            { key: 'simpleTable', icon: '🪑', name: 'Three.js: Simple Table' },
-            { key: 'hexBolt', icon: '🔧', name: 'Three.js: Hex Bolt' },
-        ];
-
-        const container = document.getElementById('projectsContainer');
-        container.innerHTML = projectItems.map(item => 
-            `<div class="project-item" data-project="${item.key}">
-                <span class="project-icon">${item.icon}</span>
-                ${item.name}
-            </div>`
-        ).join('');
+        this.setupAuthListener();
     }
 
     attachEventListeners() {
@@ -113,41 +69,14 @@ class SidebarComponent {
             this.generateFromPrompt();
         });
 
-        // Example prompts toggle
-        document.getElementById('examplePromptsToggle').addEventListener('click', () => {
-            this.toggleExamplePrompts();
-        });
-        
-        // Predefined examples toggle
-        document.getElementById('predefinedExamplesToggle').addEventListener('click', () => {
-            this.togglePredefinedExamples();
-        });
-
-        // Example prompts
-        document.querySelectorAll('.example-prompt').forEach(prompt => {
-            prompt.addEventListener('click', () => {
-                document.getElementById('promptInput').value = prompt.dataset.prompt;
-                this.consoleComponent.log(`📝 Loaded example: "${prompt.dataset.prompt}"`, 'ai');
-            });
-        });
-
-        // Manual projects
-        document.querySelectorAll('.project-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.project-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                const code = projects[item.dataset.project];
-                if (code) {
-                    document.getElementById('codeEditor').value = code;
-                    this.updateModeIndicator();
-                    this.buildModel();
-                }
-            });
-        });
-
         // Build button
         document.getElementById('buildModel').addEventListener('click', () => {
             this.buildModel();
+        });
+
+        // Download STL button
+        document.getElementById('downloadModelSTL').addEventListener('click', () => {
+            this.consoleComponent.log('💾 STL download only available for BadCAD models generated via backend', 'info');
         });
 
         // Enter key for prompt input
@@ -155,11 +84,6 @@ class SidebarComponent {
             if (e.key === 'Enter' && e.ctrlKey) {
                 this.generateFromPrompt();
             }
-        });
-
-        // Code editor change detection for mode indicator
-        document.getElementById('codeEditor').addEventListener('input', () => {
-            this.updateModeIndicator();
         });
 
         // Sidebar toggle
@@ -175,6 +99,18 @@ class SidebarComponent {
             return;
         }
 
+        // Check authentication
+        if (!this.authState || !this.authState.isSignedIn) {
+            this.consoleComponent.log('📧 Please enter your email to generate models', 'error');
+            return;
+        }
+
+        // Check usage limits
+        if (!this.authState.canGenerate) {
+            this.consoleComponent.log('⚠️ Model generation limit reached (10/10). Please contact support for more models.', 'error');
+            return;
+        }
+
         const generateBtn = document.getElementById('generateModel');
         const generateText = document.getElementById('generateText');
         
@@ -185,13 +121,16 @@ class SidebarComponent {
         try {
             this.consoleComponent.log(`🤖 Sending prompt to backend: "${prompt}"`, 'ai');
             
-            // Call backend API
+            // Include user ID in the request
             const response = await fetch('http://localhost:8000/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: prompt })
+                body: JSON.stringify({ 
+                    prompt: prompt,
+                    user_id: this.authState.user?.id
+                })
             });
 
             if (!response.ok) {
@@ -208,6 +147,11 @@ class SidebarComponent {
                 
                 // Load and display the STL model
                 await this.loadSTLModel(result.model_id);
+
+                // Update auth state (user count should be incremented)
+                if (window.authService) {
+                    await window.authService.loadUserData();
+                }
                 
             } else {
                 throw new Error(result.error || 'Unknown backend error');
@@ -276,13 +220,7 @@ class SidebarComponent {
                 this.consoleComponent.log('⚙️ Executing BadCAD code...', 'info');
                 await this.executeBadCADCode(code);
             } else {
-                // Raw Three.js mode
-                this.consoleComponent.log('🎮 Running Three.js code...', 'info');
-                const result = this.threeManager.buildRawThreeJS(code);
-                
-                if (result && result.success) {
-                    this.consoleComponent.log('✅ Three.js code executed!', 'success');
-                }
+                this.consoleComponent.log('⚠️ Code not recognized. Please use CAD functions (cad.cube, etc.) or BadCAD syntax', 'error');
             }
 
         } catch (error) {
@@ -312,13 +250,28 @@ class SidebarComponent {
 
     async executeBadCADCode(code) {
         try {
+            // Check authentication for BadCAD execution
+            if (!this.authState || !this.authState.isSignedIn) {
+                this.consoleComponent.log('🔐 Please sign in with Google to execute BadCAD code', 'error');
+                return;
+            }
+
+            // Check usage limits
+            if (!this.authState.canGenerate) {
+                this.consoleComponent.log('⚠️ Model generation limit reached (10/10). Please contact support for more models.', 'error');
+                return;
+            }
+
             // Call backend to execute BadCAD code
             const response = await fetch('http://localhost:8000/api/execute', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ code: code })
+                body: JSON.stringify({ 
+                    code: code,
+                    user_id: this.authState.user?.id
+                })
             });
 
             if (!response.ok) {
@@ -332,6 +285,11 @@ class SidebarComponent {
                 
                 // Load and display the STL model
                 await this.loadSTLModel(result.model_id);
+
+                // Update auth state (user count should be incremented)
+                if (window.authService) {
+                    await window.authService.loadUserData();
+                }
                 
             } else {
                 throw new Error(result.error || 'Unknown backend error');
@@ -392,51 +350,48 @@ class SidebarComponent {
         });
     }
 
-    updateModeIndicator() {
-        const code = document.getElementById('codeEditor').value;
-        const modeBadge = document.getElementById('modeBadge');
-        const modeDescription = document.getElementById('modeDescription');
-        
-        if (/cad\./.test(code)) {
-            modeBadge.textContent = '🔧 CAD Mode';
-            modeBadge.className = 'mode-badge cad-mode';
-            modeDescription.textContent = 'Using CSG operations (cad.cube, cad.cylinder, etc.)';
-        } else if (this.isBadCADCode(code)) {
-            modeBadge.textContent = '⚙️ BadCAD Mode';
-            modeBadge.className = 'mode-badge badcad-mode';
-            modeDescription.textContent = 'Professional CAD using BadCAD (square, circle, extrude, etc.)';
+    setupAuthListener() {
+        // Wait for auth service to be available
+        const waitForAuth = () => {
+            if (window.authService) {
+                window.authService.setAuthStateListener((authState) => {
+                    this.authState = authState;
+                    this.updateAuthUI(authState);
+                });
+            } else {
+                setTimeout(waitForAuth, 100);
+            }
+        };
+        waitForAuth();
+    }
+
+    updateAuthUI(authState) {
+        const authNotice = document.getElementById('authNotice');
+        const usageNotice = document.getElementById('usageNotice');
+        const generateBtn = document.getElementById('generateModel');
+        const promptInput = document.getElementById('promptInput');
+
+        if (!authState.isSignedIn) {
+            // Show auth notice, hide usage notice
+            authNotice.style.display = 'block';
+            usageNotice.style.display = 'none';
+            generateBtn.disabled = true;
+            promptInput.disabled = true;
+            promptInput.placeholder = 'Enter your email to generate AI models...';
+        } else if (!authState.canGenerate) {
+            // Show usage limit notice
+            authNotice.style.display = 'none';
+            usageNotice.style.display = 'block';
+            generateBtn.disabled = true;
+            promptInput.disabled = true;
+            promptInput.placeholder = 'Model generation limit reached...';
         } else {
-            modeBadge.textContent = '🎮 Three.js Playground';
-            modeBadge.className = 'mode-badge threejs-mode';
-            modeDescription.textContent = 'Full Three.js access (THREE, scene, camera, renderer, controls)';
+            // User can generate models
+            authNotice.style.display = 'none';
+            usageNotice.style.display = 'none';
+            generateBtn.disabled = false;
+            promptInput.disabled = false;
+            promptInput.placeholder = `Describe the 3D model you want to create... (${authState.remaining} more generations left :)`;
         }
     }
-    
-    togglePredefinedExamples() {
-        const container = document.getElementById('predefinedExamplesContainer');
-        const header = document.getElementById('predefinedExamplesToggle');
-        const arrow = header.querySelector('.toggle-arrow');
-        
-        if (container.style.display === 'none') {
-            container.style.display = 'block';
-            arrow.textContent = '▼';
-        } else {
-            container.style.display = 'none';
-            arrow.textContent = '▶';
-        }
-    }
-    
-    toggleExamplePrompts() {
-        const container = document.getElementById('examplePromptsContainer');
-        const header = document.getElementById('examplePromptsToggle');
-        const arrow = header.querySelector('.toggle-arrow');
-        
-        if (container.style.display === 'none') {
-            container.style.display = 'block';
-            arrow.textContent = '▼';
-        } else {
-            container.style.display = 'none';
-            arrow.textContent = '▶';
-        }
-    }
-} 
+}

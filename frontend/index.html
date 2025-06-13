@@ -24,13 +24,11 @@
 
     <!-- External Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Load three-csg-ts (ESM build) -->
-    <script type="module">
-        import { CSG } from 'https://cdn.jsdelivr.net/npm/three-csg-ts@3.2.0/+esm';
-        window.CSG = CSG;
-    </script>
+    <!-- Google APIs for authentication -->
+    <script src="https://apis.google.com/js/api.js"></script>
     
     <!-- Core Scripts -->
+    <script src="scripts/auth.js"></script>
     <script src="scripts/cad-engine.js"></script>
     <script src="scripts/ai-generator.js"></script>
     <script src="scripts/three-setup.js"></script>
@@ -45,4 +43,4 @@
     <!-- Main Application -->
     <script src="scripts/app.js"></script>
 </body>
-</html> 
+</html>

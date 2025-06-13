@@ -35,3 +35,12 @@ yarn-error.log*
 dist/
 build/
 *.log
+
+# Sensitive data files
+backend/collected_user_emails.json
+*.json.backup
+*_backup.*
+
+# Debug/test files
+frontend/debug-auth.html
+frontend/test-auth.html

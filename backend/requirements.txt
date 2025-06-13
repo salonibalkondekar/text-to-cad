@@ -1,4 +1,5 @@
 fastapi
 uvicorn[standard]
 git+https://github.com/wrongbad/badcad.git
-anthropic
+google-genai
+python-dotenv
