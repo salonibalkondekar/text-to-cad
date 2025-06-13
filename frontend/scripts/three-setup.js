@@ -538,6 +538,10 @@ class ThreeJSManager {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             
+            // Fix STL orientation: Convert from Z-up (CAD) to Y-up (Three.js)
+            // STL models from CAD systems are typically Z-up, but Three.js uses Y-up
+            mesh.rotation.x = -Math.PI / 2;  // Rotate 90 degrees around X-axis
+            
             // Clear previous model
             if (this.modelBuilder.currentModel) {
                 this.scene.remove(this.modelBuilder.currentModel);

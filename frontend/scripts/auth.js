@@ -117,7 +117,7 @@ class AuthService {
 
         try {
             const userInfo = this.getUserInfo();
-            const response = await fetch('http://localhost:8000/api/user/info', {
+            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/user/info`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ class AuthService {
 
         try {
             const userInfo = this.getUserInfo();
-            const response = await fetch('http://localhost:8000/api/user/increment-count', {
+            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/user/increment-count`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

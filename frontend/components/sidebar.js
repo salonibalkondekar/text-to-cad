@@ -122,7 +122,7 @@ class SidebarComponent {
             this.consoleComponent.log(`🤖 Sending prompt to backend: "${prompt}"`, 'ai');
             
             // Include user ID in the request
-            const response = await fetch('http://localhost:8000/api/generate', {
+            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ class SidebarComponent {
             this.consoleComponent.log('📥 Loading STL model...', 'info');
             
             // Download STL file from backend
-            const stlUrl = `http://localhost:8000/api/download/${modelId}`;
+            const stlUrl = `${window.API_URL || 'http://localhost:8000'}/api/download/${modelId}`;
             const response = await fetch(stlUrl);
             
             if (!response.ok) {
@@ -263,7 +263,7 @@ class SidebarComponent {
             }
 
             // Call backend to execute BadCAD code
-            const response = await fetch('http://localhost:8000/api/execute', {
+            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/execute`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

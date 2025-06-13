@@ -27,6 +27,12 @@
     <!-- Google APIs for authentication -->
     <script src="https://apis.google.com/js/api.js"></script>
     
+    <!-- API Configuration -->
+    <script>
+        // Make API URL available globally
+        window.API_URL = '${API_URL}' !== '${API_URL}' ? '${API_URL}' : 'http://localhost:8000';
+    </script>
+    
     <!-- Core Scripts -->
     <script src="scripts/auth.js"></script>
     <script src="scripts/cad-engine.js"></script>
