@@ -26,7 +26,7 @@ class ThreeJSManager {
             const loader = new THREE.TextureLoader();
             this.scene.background = new THREE.Color(0x1e1e1e); // Very dark gray like Blender
             
-            this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+            this.camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
             this.camera.position.set(7.36, 4.96, 6.93); // Default Blender camera position
             this.camera.lookAt(0, 0, 0);
 
@@ -79,11 +79,11 @@ class ThreeJSManager {
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         keyLight.shadow.camera.near = 0.1;
-        keyLight.shadow.camera.far = 50;
-        keyLight.shadow.camera.left = -20;
-        keyLight.shadow.camera.right = 20;
-        keyLight.shadow.camera.top = 20;
-        keyLight.shadow.camera.bottom = -20;
+        keyLight.shadow.camera.far = 1000;
+        keyLight.shadow.camera.left = -200;
+        keyLight.shadow.camera.right = 200;
+        keyLight.shadow.camera.top = 200;
+        keyLight.shadow.camera.bottom = -200;
         keyLight.shadow.bias = -0.0001;
         this.scene.add(keyLight);
 
@@ -195,7 +195,7 @@ class ThreeJSManager {
             const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
             const zoomDelta = event.deltaY * zoomSpeed;
             const newDistance = distance + zoomDelta;
-            const clampedDistance = Math.max(0.5, Math.min(100, newDistance));
+            const clampedDistance = Math.max(0.01, Math.min(50000, newDistance));
             
             this.camera.position.normalize().multiplyScalar(clampedDistance);
         });
@@ -280,7 +280,7 @@ class ThreeJSManager {
                 float finalGrid = grid1 * 0.4 + grid01 * 0.15 + grid10 * 0.5;
                 
                 // Much gentler distance-based fade - less aggressive fade-off like Blender
-                float fade = 1.0 - smoothstep(50.0, 300.0, distanceToCamera);
+                float fade = 1.0 - smoothstep(200.0, 1000.0, distanceToCamera);
                 finalGrid *= fade;
                 
                 // Axis lines (X and Z axes)
@@ -305,7 +305,7 @@ class ThreeJSManager {
         `;
 
         // Create infinite plane geometry
-        const geometry = new THREE.PlaneGeometry(1000, 1000);
+        const geometry = new THREE.PlaneGeometry(100000, 100000);
         
         const material = new THREE.ShaderMaterial({
             vertexShader,
@@ -579,12 +579,42 @@ class ThreeJSManager {
         const vertices = [];
         const normals = [];
         
-        // Check if it's ASCII STL (starts with 'solid')
-        if (typeof stlData === 'string' && stlData.trim().startsWith('solid')) {
+        // Better STL format detection
+        let isAscii = false;
+        
+        if (typeof stlData === 'string') {
+            // If it's a string and starts with 'solid', it's ASCII
+            isAscii = stlData.trim().startsWith('solid');
+        } else if (stlData instanceof ArrayBuffer) {
+            // For ArrayBuffer, check if it starts with 'solid' when interpreted as text
+            const firstBytes = new Uint8Array(stlData.slice(0, 80));
+            const headerText = new TextDecoder().decode(firstBytes);
+            isAscii = headerText.trim().startsWith('solid');
+            
+            // Additional check: ASCII STL files are usually much larger than their binary equivalent
+            // Binary STL should be: 80 + 4 + (triangles * 50) bytes
+            if (!isAscii && stlData.byteLength >= 84) {
+                const dataView = new DataView(stlData);
+                const triangleCount = dataView.getUint32(80, true);
+                const expectedBinarySize = 84 + triangleCount * 50;
+                
+                // If the file is much larger than expected for binary, it might be ASCII
+                if (stlData.byteLength > expectedBinarySize * 2) {
+                    console.log('🔍 File size suggests ASCII format, double-checking...');
+                    const fullText = new TextDecoder().decode(stlData);
+                    isAscii = fullText.trim().startsWith('solid');
+                }
+            }
+        }
+        
+        if (isAscii) {
             // Parse ASCII STL
-            return this.parseASCIISTL(stlData, geometry, vertices, normals);
+            console.log('📝 Detected ASCII STL format');
+            const textData = typeof stlData === 'string' ? stlData : new TextDecoder().decode(stlData);
+            return this.parseASCIISTL(textData, geometry, vertices, normals);
         } else {
             // Parse Binary STL
+            console.log('🔢 Detected Binary STL format');
             return this.parseBinarySTL(stlData, geometry);
         }
     }
@@ -673,6 +703,13 @@ class ThreeJSManager {
         const triangleCount = dataView.getUint32(80, true); // little endian
         console.log(`📏 Binary STL contains ${triangleCount} triangles`);
         
+        // Calculate expected file size
+        const expectedSize = 84 + triangleCount * 50; // 80-byte header + 4-byte count + 50 bytes per triangle
+        if (dataView.byteLength < expectedSize) {
+            console.warn(`⚠️ STL file size mismatch: expected ${expectedSize} bytes, got ${dataView.byteLength} bytes`);
+            console.warn('Attempting to parse with available data...');
+        }
+        
         const vertices = [];
         const normals = [];
         
@@ -680,20 +717,33 @@ class ThreeJSManager {
         for (let i = 0; i < triangleCount; i++) {
             const offset = 84 + i * 50;
             
-            // Read normal (3 floats)
-            const nx = dataView.getFloat32(offset, true);
-            const ny = dataView.getFloat32(offset + 4, true);
-            const nz = dataView.getFloat32(offset + 8, true);
+            // Bounds check: ensure we have enough data for this triangle
+            if (offset + 50 > dataView.byteLength) {
+                console.warn(`⚠️ Triangle ${i}: offset ${offset + 50} exceeds buffer size ${dataView.byteLength}`);
+                console.warn(`Only parsing ${i} triangles out of ${triangleCount} claimed triangles`);
+                break; // Stop parsing when we run out of data
+            }
             
-            // Read 3 vertices (9 floats total)
-            for (let j = 0; j < 3; j++) {
-                const vertexOffset = offset + 12 + j * 12;
-                const x = dataView.getFloat32(vertexOffset, true);
-                const y = dataView.getFloat32(vertexOffset + 4, true);
-                const z = dataView.getFloat32(vertexOffset + 8, true);
+            try {
+                // Read normal (3 floats)
+                const nx = dataView.getFloat32(offset, true);
+                const ny = dataView.getFloat32(offset + 4, true);
+                const nz = dataView.getFloat32(offset + 8, true);
                 
-                vertices.push(x, y, z);
-                normals.push(nx, ny, nz);
+                // Read 3 vertices (9 floats total)
+                for (let j = 0; j < 3; j++) {
+                    const vertexOffset = offset + 12 + j * 12;
+                    const x = dataView.getFloat32(vertexOffset, true);
+                    const y = dataView.getFloat32(vertexOffset + 4, true);
+                    const z = dataView.getFloat32(vertexOffset + 8, true);
+                    
+                    vertices.push(x, y, z);
+                    normals.push(nx, ny, nz);
+                }
+            } catch (error) {
+                console.error(`❌ Error parsing triangle ${i} at offset ${offset}:`, error);
+                console.warn(`Stopping parsing at triangle ${i}/${triangleCount}`);
+                break;
             }
         }
         
@@ -705,7 +755,7 @@ class ThreeJSManager {
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.computeBoundingBox();
         
-        console.log(`📏 Parsed binary STL: ${vertices.length / 3} vertices, ${triangleCount} triangles`);
+        console.log(`📏 Parsed binary STL: ${vertices.length / 3} vertices, ${vertices.length / 9} triangles`);
         return geometry;
     }
 }

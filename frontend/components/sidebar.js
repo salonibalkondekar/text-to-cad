@@ -134,7 +134,8 @@ class SidebarComponent {
             });
 
             if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Backend error: ${response.status} - ${errorData.detail || 'Unknown error'}`);
             }
 
             const result = await response.json();
@@ -154,7 +155,30 @@ class SidebarComponent {
                 }
                 
             } else {
-                throw new Error(result.error || 'Unknown backend error');
+                // Handle API-specific errors with helpful messages
+                let errorMessage = result.message || 'Unknown error occurred';
+                let actionMessage = '';
+                
+                switch (result.error_type) {
+                    case 'invalid_api_key':
+                        errorMessage = '🔑 API Configuration Error';
+                        actionMessage = 'The server\'s Gemini API key is invalid. Please contact the administrator to fix the configuration.';
+                        break;
+                    case 'quota_exhausted':
+                        errorMessage = '📊 API Quota Exceeded';
+                        actionMessage = 'The Gemini API quota has been exceeded. Please try again later or contact support.';
+                        break;
+                    case 'permission_denied':
+                        errorMessage = '🚫 API Access Denied';
+                        actionMessage = 'Access to the Gemini API was denied. Please contact the administrator.';
+                        break;
+                    default:
+                        actionMessage = result.error_details || 'Please try again or contact support.';
+                }
+                
+                this.consoleComponent.log(`❌ ${errorMessage}`, 'error');
+                this.consoleComponent.log(`💡 ${actionMessage}`, 'info');
+                throw new Error(`${errorMessage}: ${actionMessage}`);
             }
 
         } catch (error) {
@@ -275,7 +299,8 @@ class SidebarComponent {
             });
 
             if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Backend error: ${response.status} - ${errorData.detail || 'Unknown error'}`);
             }
 
             const result = await response.json();
@@ -292,7 +317,7 @@ class SidebarComponent {
                 }
                 
             } else {
-                throw new Error(result.error || 'Unknown backend error');
+                throw new Error(result.error || 'Code execution failed');
             }
 
         } catch (error) {

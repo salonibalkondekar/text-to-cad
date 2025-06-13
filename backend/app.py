@@ -133,9 +133,11 @@ class UserCountRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     success: bool
-    model_id: str
-    badcad_code: str
+    model_id: str = None
+    badcad_code: str = None
     message: str
+    error_type: str = None
+    error_details: str = None
 
 class ExecuteResponse(BaseModel):
     success: bool
@@ -173,9 +175,36 @@ async def generate_model(request: PromptRequest):
             badcad_code = generate_badcad_code_with_gemini(request.prompt)
             generation_status = "ai_generated"
         except Exception as gen_error:
-            print(f"⚠️ AI generation failed, using smart fallback: {gen_error}")
-            badcad_code = generate_smart_fallback_badcad_code(request.prompt)
-            generation_status = "fallback_generated"
+            error_msg = str(gen_error)
+            print(f"❌ AI generation failed: {error_msg}")
+            
+            # Check for specific API errors that should be reported to user
+            if "INVALID_ARGUMENT" in error_msg and "API key not valid" in error_msg:
+                return GenerateResponse(
+                    success=False,
+                    message="API configuration error",
+                    error_type="invalid_api_key",
+                    error_details="The Gemini API key is invalid or missing. Please check the server configuration."
+                )
+            elif "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
+                return GenerateResponse(
+                    success=False,
+                    message="API quota exceeded",
+                    error_type="quota_exhausted",
+                    error_details="The Gemini API quota has been exceeded. Please try again later."
+                )
+            elif "PERMISSION_DENIED" in error_msg:
+                return GenerateResponse(
+                    success=False,
+                    message="API access denied",
+                    error_type="permission_denied", 
+                    error_details="Access to the Gemini API was denied. Please check the API key permissions."
+                )
+            else:
+                # For other errors, still provide fallback but inform user
+                print(f"⚠️ Using fallback generation due to: {gen_error}")
+                badcad_code = generate_smart_fallback_badcad_code(request.prompt)
+                generation_status = "fallback_generated"
         
         # Execute BadCAD code and generate STL
         model_id = str(uuid.uuid4())
@@ -541,15 +570,15 @@ model = shaft + hex_head"""
         error_msg = str(e)
         print(f"❌ Gemini generation failed: {error_msg}")
         
-        # Check for specific error types and provide helpful fallback
-        if "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
-            print("💡 Quota exhausted - using fallback generation")
-            # Generate a more relevant fallback based on the prompt
-            return generate_smart_fallback_badcad_code(prompt)
+        # Check for critical API errors that should be propagated to user
+        if "INVALID_ARGUMENT" in error_msg and "API key not valid" in error_msg:
+            raise Exception(f"INVALID_ARGUMENT. {e}")
+        elif "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
+            raise Exception(f"RESOURCE_EXHAUSTED. {e}")
         elif "PERMISSION_DENIED" in error_msg:
-            print("🔑 Permission denied - check API key")
-            return generate_smart_fallback_badcad_code(prompt)
+            raise Exception(f"PERMISSION_DENIED. {e}")
         else:
+            # For other errors, provide a fallback
             print(f"🔧 General error: {error_msg}")
             return generate_smart_fallback_badcad_code(prompt)
 
