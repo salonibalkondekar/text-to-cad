@@ -325,6 +325,18 @@ class AuthService {
         return (this.modelCount / this.maxModels) * 100;
     }
 
+    getAuthState() {
+        return {
+            isSignedIn: this.isSignedIn,
+            user: this.getUserInfo(),
+            modelCount: this.modelCount,
+            maxModels: this.maxModels,
+            canGenerate: this.canGenerateModel(),
+            remaining: this.getRemainingModels(),
+            usagePercentage: this.getUsagePercentage()
+        };
+    }
+
     notifyAuthStateChanged() {
         const authState = {
             isSignedIn: this.isSignedIn,

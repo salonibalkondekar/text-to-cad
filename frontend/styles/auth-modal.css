@@ -188,7 +188,8 @@
     margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    justify-content: space-between;
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid #444;
@@ -201,11 +202,14 @@
 }
 
 .auth-notice-banner-icon {
-    font-size: 20px;
+    font-size: 24px;
 }
 
 .auth-notice-banner-text {
-    flex: 1;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
 }
 
 .auth-notice-banner-text strong {
@@ -221,10 +225,17 @@
 .auth-notice-banner-action {
     background: #007bff;
     color: white;
-    padding: 5px 12px;
+    padding: 8px 16px;
     border-radius: 4px;
     font-weight: 500;
     font-size: 13px;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.auth-notice-banner-action:hover {
+    background: #0062d8;
 }
 
 /* Model Count Display */

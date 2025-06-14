@@ -123,17 +123,18 @@ class ModelStorage:
         
         return cleanup_count
     
-    def get_temp_file_path(self, suffix: str = '.stl') -> str:
+    def get_temp_file_path(self, prefix: str = '', suffix: str = '.stl') -> str:
         """
         Get a path for a new temporary file.
         
         Args:
+            prefix: Prefix for the filename (optional)
             suffix: File extension
             
         Returns:
             Path to the temporary file
         """
-        filename = f"{uuid.uuid4()}{suffix}"
+        filename = f"{prefix}{uuid.uuid4()}{suffix}"
         return str(self.temp_dir / filename)
     
     def list_models(self) -> Dict[str, Dict[str, Any]]:

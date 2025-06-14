@@ -28,8 +28,7 @@ class SidebarComponent {
                         <div class="auth-notice-banner" id="authBanner" style="display: none;">
                             <div class="auth-notice-banner-icon">✉️</div>
                             <div class="auth-notice-banner-text">
-                                <strong>Email Required!</strong><br>
-                                <small>Enter your email to start creating AI models</small>
+                                <strong>Email Required!</strong>
                             </div>
                             <div class="auth-notice-banner-action">Sign In</div>
                         </div>
