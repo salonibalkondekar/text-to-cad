@@ -195,11 +195,7 @@ class ThreeJSManager {
             const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
             const zoomDelta = event.deltaY * zoomSpeed;
             const newDistance = distance + zoomDelta;
-<<<<<<< Updated upstream
-            const clampedDistance = Math.max(0.01, Math.min(50000, newDistance));
-=======
             const clampedDistance = Math.max(0.5, Math.min(1000, newDistance));
->>>>>>> Stashed changes
             
             this.camera.position.normalize().multiplyScalar(clampedDistance);
         });
