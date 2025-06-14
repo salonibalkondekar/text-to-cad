@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api", tags=["generation"])
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_model(request: PromptRequest):
+async def generate_model(request: PromptRequest, http_request: Request):
     """
     Generate a 3D model from a natural language prompt.
     
@@ -43,25 +43,14 @@ async def generate_model(request: PromptRequest):
         
         # Check user limits if authenticated
         if request.user_id:
-            # Create user if doesn't exist (for backward compatibility)
-            user_data = user_manager.get_user(request.user_id)
-            if not user_data:
-                logger.info(f"Creating new user for generation: {request.user_id}")
-                user_manager.create_or_update_user(
-                    user_id=request.user_id,
-                    email=f"{request.user_id}@generated.local",  # Default email
-                    name=f"User {request.user_id}"  # Default name
-                )
-            
-            if not user_manager.check_user_can_generate(request.user_id):
+            # Check if user can generate more models
+            try:
+                await user_manager.check_user_limit(request.user_id)
+            except UserLimitExceededError:
                 raise HTTPException(
                     status_code=403, 
                     detail="Model generation limit reached (10 models max)"
                 )
-        
-        # Record the prompt
-        if request.user_id:
-            user_manager.record_user_prompt(request.user_id, request.prompt, "generate")
         
         # Generate BadCAD code using AI
         try:
@@ -90,13 +79,26 @@ async def generate_model(request: PromptRequest):
         # Store the model file reference
         model_storage.store_model(model_id, stl_file_path)
         
-        # Increment user model count if authenticated
+        # Track generation and increment count if authenticated
         if request.user_id:
             try:
-                user_manager.increment_user_model_count(request.user_id)
-            except UserLimitExceededError:
-                # This shouldn't happen as we checked earlier, but handle it
-                raise HTTPException(status_code=403, detail="Model generation limit exceeded")
+                # Get session cookie from request (if available)
+                session_cookie = http_request.headers.get("cookie", "").split("session_id=")[-1].split(";")[0] if "session_id=" in http_request.headers.get("cookie", "") else None
+                
+                if session_cookie:
+                    # Increment model count
+                    await user_manager.increment_model_count(request.user_id, session_cookie)
+                    
+                    # Track the generation event
+                    await user_manager.track_generation(
+                        session_cookie=session_cookie,
+                        prompt=request.prompt,
+                        success=True,
+                        generation_time=None  # Could add timing if needed
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to track generation: {e}")
+                # Don't fail the request if tracking fails
         
         # Create response message
         if generation_status == GenerationStatus.AI_GENERATED:
@@ -121,7 +123,7 @@ async def generate_model(request: PromptRequest):
 
 
 @router.post("/execute", response_model=ExecuteResponse)
-async def execute_badcad_code(request: BadCADCodeRequest):
+async def execute_badcad_code(request: BadCADCodeRequest, http_request: Request):
     """
     Execute user-provided BadCAD code to generate an STL file.
     
@@ -137,25 +139,14 @@ async def execute_badcad_code(request: BadCADCodeRequest):
         
         # Check user limits if authenticated
         if request.user_id:
-            # Create user if doesn't exist (for backward compatibility)
-            user_data = user_manager.get_user(request.user_id)
-            if not user_data:
-                logger.info(f"Creating new user for execution: {request.user_id}")
-                user_manager.create_or_update_user(
-                    user_id=request.user_id,
-                    email=f"{request.user_id}@generated.local",  # Default email
-                    name=f"User {request.user_id}"  # Default name
-                )
-            
-            if not user_manager.check_user_can_generate(request.user_id):
+            # Check if user can generate more models
+            try:
+                await user_manager.check_user_limit(request.user_id)
+            except UserLimitExceededError:
                 raise HTTPException(
                     status_code=403, 
                     detail="Model generation limit reached (10 models max)"
                 )
-        
-        # Record the code execution
-        if request.user_id:
-            user_manager.record_user_prompt(request.user_id, request.code, "execute_code")
         
         # Execute the user-provided BadCAD code
         model_id = str(uuid.uuid4())
@@ -183,12 +174,26 @@ async def execute_badcad_code(request: BadCADCodeRequest):
         # Store the model file reference
         model_storage.store_model(model_id, stl_file_path)
         
-        # Increment user model count if authenticated
+        # Track execution and increment count if authenticated
         if request.user_id:
             try:
-                user_manager.increment_user_model_count(request.user_id)
-            except UserLimitExceededError:
-                raise HTTPException(status_code=403, detail="Model generation limit exceeded")
+                # Get session cookie from request (if available)
+                session_cookie = http_request.headers.get("cookie", "").split("session_id=")[-1].split(";")[0] if "session_id=" in http_request.headers.get("cookie", "") else None
+                
+                if session_cookie:
+                    # Increment model count
+                    await user_manager.increment_model_count(request.user_id, session_cookie)
+                    
+                    # Track the execution event
+                    await user_manager.track_generation(
+                        session_cookie=session_cookie,
+                        prompt=f"[BadCAD Code]: {request.code[:100]}...",
+                        success=True,
+                        generation_time=None
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to track execution: {e}")
+                # Don't fail the request if tracking fails
         
         return ExecuteResponse(
             success=True,
