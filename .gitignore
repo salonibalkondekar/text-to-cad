@@ -44,3 +44,15 @@ backend/collected_user_emails.json
 # Debug/test files
 frontend/debug-auth.html
 frontend/test-auth.html
+
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+coverage.svg
+.pytest_cache/
+*.py,cover
+
+# Test artifacts
+backend/bandit-report.json
+backend/tests/__pycache__/

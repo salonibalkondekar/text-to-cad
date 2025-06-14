@@ -1,0 +1,96 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      working-directory: backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run linting
+      working-directory: backend
+      run: |
+        pip install flake8 black isort
+        # Check code formatting
+        black --check app.py tests/
+        # Check import sorting
+        isort --check-only app.py tests/
+        # Run flake8 linting
+        flake8 app.py tests/ --max-line-length=120 --ignore=E501,W503
+    
+    - name: Run unit tests
+      working-directory: backend
+      env:
+        GEMINI_API_KEY: test_key
+        TESTING: true
+      run: |
+        pytest tests/test_app.py -v --cov=app --cov-report=xml
+    
+    - name: Run security tests
+      working-directory: backend
+      env:
+        GEMINI_API_KEY: test_key
+        TESTING: true
+      run: |
+        pytest tests/test_security.py -v
+    
+    - name: Run integration tests
+      working-directory: backend
+      env:
+        GEMINI_API_KEY: test_key
+        TESTING: true
+      run: |
+        pytest tests/test_integration.py -v
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+    
+    - name: Security scan with Bandit
+      working-directory: backend
+      run: |
+        pip install bandit
+        bandit -r app.py -f json -o bandit-report.json || true
+    
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-security-report
+        path: backend/bandit-report.json

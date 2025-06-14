@@ -33,3 +33,7 @@ build/
 # BadCAD generated files
 *.stl
 /tmp/
+
+# Test reports
+test_report.md
+migration_comparison.md

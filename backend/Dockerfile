@@ -10,6 +10,7 @@ RUN apt-get update && \
     build-essential \
     cmake \
     g++ \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

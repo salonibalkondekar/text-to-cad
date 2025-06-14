@@ -1,18 +1,42 @@
-// Authentication Service - Email Collection Management (Temporary)
+// Authentication Service - Session-based with Analytics Backend
 
 class AuthService {
     constructor() {
-        console.log('🚀 AuthService constructor called (Email Collection Mode)');
+        console.log('🚀 AuthService constructor called (Session-based Mode)');
         this.user = null;
         this.isSignedIn = false;
         this.modelCount = 0;
         this.maxModels = 10;
         this.onAuthStateChanged = null;
+        this.csrfToken = null;
         
-        // Load user data from localStorage if available
-        this.loadLocalUserData();
+        // Check for existing session
+        this.checkExistingSession();
+    }
+
+    async checkExistingSession() {
+        try {
+            const response = await fetch('/analytics/auth/current-user', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                this.user = {
+                    id: userData.id,
+                    name: userData.name,
+                    email: userData.email,
+                    imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`
+                };
+                this.isSignedIn = true;
+                this.modelCount = userData.model_count;
+                console.log('✅ Existing session found:', userData);
+            }
+        } catch (error) {
+            console.log('📊 No existing session');
+        }
         
-        // Initialize without Google API
+        // Notify listeners
         setTimeout(() => this.notifyAuthStateChanged(), 100);
     }
 

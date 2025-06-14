@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/viewport.css">
     <link rel="stylesheet" href="styles/console.css">
+    <!-- Analytics Tracking -->
+    <script src="/analytics/tracking.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -30,7 +32,16 @@
     <!-- API Configuration -->
     <script>
         // Make API URL available globally
-        window.API_URL = '${API_URL}' !== '${API_URL}' ? '${API_URL}' : 'http://localhost:8000';
+        // Check if we're running in production (with /text-to-cad/ prefix)
+        const isProduction = window.location.pathname.startsWith('/text-to-cad');
+        if (isProduction) {
+            // In production, use relative paths that work with nginx proxy
+            window.API_URL = '/text-to-cad';
+        } else {
+            // In development, use the environment variable or localhost
+            window.API_URL = '${API_URL}' !== '${API_URL}' ? '${API_URL}' : 'http://localhost:8000';
+        }
+        console.log('API URL configured as:', window.API_URL);
     </script>
     
     <!-- Core Scripts -->

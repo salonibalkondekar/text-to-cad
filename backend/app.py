@@ -1,116 +1,71 @@
-from fastapi import FastAPI, HTTPException
+"""
+Text-to-CAD API - Modular FastAPI Application
+
+A FastAPI application that generates 3D CAD models from text descriptions
+using AI and BadCAD. This version uses a modular architecture with separate
+services for AI generation, BadCAD execution, user management, and storage.
+"""
+import logging
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-import os
-import tempfile
-import uuid
-import re
-import json
-from datetime import datetime
 
-# Load environment variables
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    print("✅ Environment variables loaded")
-except ImportError:
-    print("⚠️ python-dotenv not installed, using system environment variables")
+# Import modular components
+from core.config import settings
+from api.routes import generation, download, user, admin
 
-try:
-    import badcad
-    from badcad import *
-    BADCAD_AVAILABLE = True
-    print("✅ BadCAD successfully imported")
-except ImportError as e:
-    print(f"❌ BadCAD import failed: {e}")
-    BADCAD_AVAILABLE = False
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# Initialize Google Gemini client
-try:
-    from google import genai
-    gemini_client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY")
-    )
-    GEMINI_AVAILABLE = True
-    print("✅ Gemini client initialized")
-except ImportError as e:
-    print(f"❌ Gemini import failed: {e}")
-    GEMINI_AVAILABLE = False
-    gemini_client = None
-    # Define fallback classes
-    class Box:
-        def __init__(self, x, y, z): pass
-        def export_stl(self, path): pass
-    class Cylinder:
-        def __init__(self, r, h): pass
-    class Sphere:
-        def __init__(self, r): pass
-    Union = Intersection = Box
+# Create FastAPI application
+app = FastAPI(
+    title=settings.api_title,
+    description="Generate 3D CAD models from text descriptions using AI and BadCAD",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-app = FastAPI(title="Text-to-CAD API", description="Generate 3D CAD models from text descriptions")
-
-# Enable CORS for frontend communication
+# Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=["*"],  # In production, specify actual frontend origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Store generated models temporarily
-temp_models = {}
+# Include API route modules
+app.include_router(generation.router)
+app.include_router(download.router)
+app.include_router(user.router)
+app.include_router(admin.router)
 
-# Simple in-memory user database and JSON file storage (temporary solution)
-user_database = {}
-COLLECTED_EMAILS_FILE = "collected_user_emails.json"
-
-def load_collected_emails():
-    """Load collected user emails from JSON file"""
-    try:
-        if os.path.exists(COLLECTED_EMAILS_FILE):
-            with open(COLLECTED_EMAILS_FILE, 'r') as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"❌ Failed to load collected emails: {e}")
-    return {}
-
-def save_collected_emails(data):
-    """Save collected user emails to JSON file"""
-    try:
-        with open(COLLECTED_EMAILS_FILE, 'w') as f:
-            json.dump(data, indent=2, fp=f)
-        print(f"✅ Saved user data to {COLLECTED_EMAILS_FILE}")
-    except Exception as e:
-        print(f"❌ Failed to save collected emails: {e}")
-
-def add_user_prompt(user_id, email, prompt, prompt_type="generate"):
-    """Add a user's prompt to the collected data"""
-    collected_data = load_collected_emails()
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint to verify API is running.
     
-    if user_id not in collected_data:
-        collected_data[user_id] = {
-            'email': email,
-            'prompts': [],
-            'model_count': 0,
-            'created_at': datetime.now().isoformat(),
-            'last_activity': datetime.now().isoformat()
+    Returns basic system status and configuration info.
+    """
+    return {
+        "status": "healthy",
+        "api_title": settings.api_title,
+        "version": "2.0.0",
+        "architecture": "modular",
+        "services": {
+            "ai_generation": "available",
+            "badcad_executor": "available", 
+            "user_management": "available",
+            "storage": "available"
         }
-    
-    # Add the prompt
-    collected_data[user_id]['prompts'].append({
-        'prompt': prompt,
-        'type': prompt_type,
-        'timestamp': datetime.now().isoformat()
-    })
-    
-    # Update last activity
-    collected_data[user_id]['last_activity'] = datetime.now().isoformat()
-    
-    save_collected_emails(collected_data)
-    return collected_data[user_id]
+    }
 
+<<<<<<< Updated upstream
 # Load existing collected emails on startup
 collected_user_data = load_collected_emails()
 print(f"📧 Loaded {len(collected_user_data)} user records from {COLLECTED_EMAILS_FILE}")
@@ -373,200 +328,51 @@ async def get_collected_emails():
             'total_prompts': sum(len(user_data.get('prompts', [])) for user_data in collected_data.values()),
             'total_models_generated': sum(user_data.get('model_count', 0) for user_data in collected_data.values()),
             'users': []
+=======
+# Root endpoint
+@app.get("/")
+async def root():
+    """
+    Root endpoint with API information.
+    """
+    return {
+        "message": "Text-to-CAD API v2.0 - Modular Architecture",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "generation": "/api/generate",
+            "execution": "/api/execute",
+            "download": "/api/download/{model_id}",
+            "user_info": "/api/user/info",
+            "admin": "/api/admin/collected-emails"
+>>>>>>> Stashed changes
         }
-        
-        for user_id, user_data in collected_data.items():
-            summary['users'].append({
-                'user_id': user_id,
-                'email': user_data.get('email', 'N/A'),
-                'name': user_data.get('name', 'N/A'),
-                'model_count': user_data.get('model_count', 0),
-                'total_prompts': len(user_data.get('prompts', [])),
-                'created_at': user_data.get('created_at', 'N/A'),
-                'last_activity': user_data.get('last_activity', 'N/A'),
-                'recent_prompts': user_data.get('prompts', [])[-3:] if user_data.get('prompts') else []
-            })
-        
-        return summary
-        
+    }
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """
+    Application startup event.
+    
+    Logs startup information and verifies all services are available.
+    """
+    logger.info("🚀 Starting Text-to-CAD API v2.0 (Modular Architecture)")
+    logger.info(f"📋 Configuration: {settings.api_title}")
+    logger.info(f"🔧 Max models per user: {settings.max_models_per_user}")
+    
+    # Log service availability
+    try:
+        from services.ai_generation import ai_generator
+        logger.info("✅ AI Generation service loaded")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-def generate_badcad_code_with_gemini(prompt):
-    """Generate BadCAD code using Google Gemini AI"""
-    if not GEMINI_AVAILABLE:
-        print("Gemini not available, using fallback")
-        return generate_hardcoded_badcad_code()
-    
-    system_prompt = """You are an expert at generating BadCAD code for 3D CAD modeling. BadCAD is a Python library for creating 3D models using constructive solid geometry.
-
-CORE BadCAD API:
-
-2D Shapes (return Shape objects):
-- square(x, y, center=False) - rectangle
-- circle(r=None, d=None, fn=0) - circle
-- polygon(points) - custom polygon
-
-3D Primitives (return Solid objects):
-- cube(x, y, z, center=False) - box
-- cylinder(h, r=None, d=None, center=False, fn=0) - cylinder
-- sphere(r=None, d=None, fn=0) - sphere
-- conic(h, r1, r2, center=False, fn=0) - truncated cone (for cones, use r2=0.001 not 0)
-
-Shape Operations:
-- .extrude(height, center=False) - 2D to 3D
-- .revolve(z=360, fn=0) - revolve around Z axis
-- .extrude_to(other_shape, height) - morph between shapes
-- .offset(delta, join_type='miter') - inset/outset (join_type: 'miter', 'round', 'square')
-
-Transformations:
-- .move(x=0, y=0, z=0) - translate (Solids need z, Shapes need x,y)
-- .rotate(x=0, y=0, z=0) - rotate (Solids: x,y,z, Shapes: z only)
-- .scale(x=1, y=1, z=1) - scale (Solids: x,y,z, Shapes: x,y)
-- .mirror(x=0, y=0, z=0) - mirror (Solids: x,y,z, Shapes: x,y)
-- .align() - align using bounding box (xmin/x/xmax, ymin/y/ymax, zmin/z/zmax)
-
-Boolean Operations:
-- + (union), - (subtract), & (intersect)
-
-Special Functions:
-- threads(d, h, pitch, starts=1) - generate screw threads
-- text(string, size=10, font='Helvetica') - text to 2D shape
-- hull(*objects) - convex hull of multiple objects
-
-IMPORTANT RULES:
-1. Always end with a variable named 'model' that contains the final result
-2. Import: from badcad import *
-3. Use .move() for positioning (NOT .translate())
-4. Shapes are 2D, Solids are 3D - use .extrude() to convert Shape to Solid
-5. Use center=True for centering when available
-6. Use parametric designs with variables
-7. You have full Python access - use math, loops, functions as needed
-
-Generate ONLY the BadCAD code, no explanations."""
-
-    few_shot_examples = [
-        {
-            "prompt": "Create a cross shape",
-            "code": """from badcad import *
-# Cross shape
-plus = square(30, 10, center=True) + square(10, 30, center=True)
-model = plus.extrude(5)"""
-        },
-        {
-            "prompt": "Create a simple cone",
-            "code": """from badcad import *
-# Simple cone using extrude_to (more reliable than conic with r2=0)
-base_radius = 10
-height = 15
-
-base = circle(r=base_radius)
-tip = circle(r=0.001)  # Very small circle for tip
-model = base.extrude_to(tip, height)"""
-        },
-        {
-            "prompt": "Create a simple staircase with 3 steps",
-            "code": """from badcad import *
-# Simple staircase with 3 steps
-step_width = 30
-step_depth = 20
-step_height = 8
-
-# Create steps at different positions
-step1 = cube(step_width, step_depth, step_height, center=True)
-step2 = cube(step_width, step_depth, step_height, center=True).move(0, step_depth, step_height)
-step3 = cube(step_width, step_depth, step_height, center=True).move(0, step_depth*2, step_height*2)
-
-# Combine all steps
-model = step1 + step2 + step3"""
-        },
-        {
-            "prompt": "Create a washer or ring",
-            "code": """from badcad import *
-# Washer/ring
-outer_radius = 15
-inner_radius = 5
-thickness = 3
-
-outer = circle(r=outer_radius)
-inner = circle(r=inner_radius)
-ring = outer - inner
-model = ring.extrude(thickness)"""
-        },
-        {
-            "prompt": "Make a hexagonal nut",
-            "code": """from badcad import *
-import math
-# Hexagonal nut
-hex_width = 20
-thickness = 10
-hole_diameter = 12
-
-# Create hexagon
-hex_points = []
-for i in range(6):
-    angle = i * math.pi / 3
-    x = (hex_width / 2) * math.cos(angle)
-    y = (hex_width / 2) * math.sin(angle)
-    hex_points.append((x, y))
-
-hex_shape = polygon(hex_points)
-nut = hex_shape.extrude(thickness)
-
-# Create hole
-hole = circle(d=hole_diameter).extrude(thickness)
-
-model = nut - hole"""
-        },
-        {
-            "prompt": "Create a bolt with threads",
-            "code": """from badcad import *
-# Bolt with threads and hex head
-thread_diameter = 8
-thread_length = 16
-pitch = 1.25
-head_size = 12
-head_height = 5
-
-# Create threaded shaft
-shaft = threads(d=thread_diameter, h=thread_length, pitch=pitch)
-
-# Create hex head
-hex_head = circle(r=head_size, fn=6).extrude(head_height).move(z=thread_length)
-
-model = shaft + hex_head"""
-        }
-    ]
-    
-    # Build the message with few-shot examples
-    user_message = "Here are some examples of BadCAD code generation:\n\n"
-    
-    for example in few_shot_examples:
-        user_message += f"Prompt: {example['prompt']}\nBadCAD Code:\n```python\n{example['code']}\n```\n\n"
-    
-    user_message += f"Now generate BadCAD code for this prompt: {prompt}\n\nBadCAD Code:"
-    
-    # Combine system prompt and user message for Gemini
-    full_prompt = f"{system_prompt}\n\n{user_message}"
+        logger.error(f"❌ AI Generation service failed: {e}")
     
     try:
-        print(f"🤖 Generating BadCAD code for: '{prompt}'")
-        
-        response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-preview-04-17",
-            contents=full_prompt
-        )
-        
-        response_text = response.text if response.text else ""
-        print(f"📝 Gemini response: {response_text[:200]}...")
-        
-        # Extract code from response
-        badcad_code = extract_badcad_code(response_text)
-        print(f"✅ Extracted BadCAD code ({len(badcad_code)} chars)")
-        
-        return badcad_code
-        
+        from services.badcad_executor import badcad_executor
+        logger.info("✅ BadCAD Executor service loaded")
     except Exception as e:
+<<<<<<< Updated upstream
         error_msg = str(e)
         print(f"❌ Gemini generation failed: {error_msg}")
         
@@ -684,175 +490,59 @@ def execute_badcad_and_export(badcad_code, model_id):
         print("BadCAD not available, creating fallback STL")
         create_fallback_stl(stl_path)
         return stl_path
+=======
+        logger.error(f"❌ BadCAD Executor service failed: {e}")
+>>>>>>> Stashed changes
     
     try:
-        # Execute the BadCAD code with full access for performance
-        print("🔧 Setting up BadCAD execution environment...")
-        
-        # Create execution environment with FULL Python and BadCAD access - no restrictions
-        exec_globals = globals().copy()  # Full access to everything
-        exec_locals = {}
-        
-        print(f"✅ BadCAD environment ready with FULL access")
-        
-        # Execute the code
-        print(f"Executing BadCAD code:\n{badcad_code}")
-        exec(badcad_code, exec_globals)
-        
-        # Get the model from the execution context
-        if 'model' in exec_globals:
-            model = exec_globals['model']
-            print(f"Model found: {type(model)}")
-            print(f"Model methods: {[m for m in dir(model) if not m.startswith('_')]}")
-            
-            # Use BadCAD's stl method
-            try:
-                if hasattr(model, 'stl'):
-                    # Get STL data from BadCAD model
-                    stl_data = model.stl()
-                    print(f"STL data type: {type(stl_data)}")
-                    
-                    # Write STL data to file (handle both bytes and string)
-                    if isinstance(stl_data, bytes):
-                        with open(stl_path, 'wb') as f:
-                            f.write(stl_data)
-                    else:
-                        with open(stl_path, 'w') as f:
-                            f.write(stl_data)
-                    
-                    print(f"✅ STL exported using model.stl() to: {stl_path}")
-                else:
-                    raise AttributeError("No stl method found on model")
-                
-                # Verify the file was created and has content
-                if os.path.exists(stl_path) and os.path.getsize(stl_path) > 0:
-                    print(f"✅ STL file verified: {os.path.getsize(stl_path)} bytes")
-                else:
-                    raise Exception("STL file was not created or is empty")
-                
-            except Exception as export_error:
-                print(f"❌ STL export failed: {export_error}")
-                print("Creating fallback STL...")
-                create_fallback_stl(stl_path)
-                
-        else:
-            print("No 'model' variable found in execution context")
-            print(f"Available variables: {[k for k in exec_globals.keys() if not k.startswith('_')]}")
-            # Fallback: create a simple cube
-            create_fallback_stl(stl_path)
-            print("Used fallback cube")
-        
-        return stl_path
-        
+        from services.user_management import user_manager
+        logger.info("✅ User Management service loaded")
     except Exception as e:
-        # If BadCAD fails, create a simple hardcoded STL file
-        print(f"BadCAD execution failed: {e}")
-        create_fallback_stl(stl_path)
-        return stl_path
-
-def check_user_can_generate(user_id):
-    """Check if user can generate more models"""
-    if user_id not in user_database:
-        return True  # New user can generate
-    return user_database[user_id]['model_count'] < 10
-
-def increment_user_model_count(user_id):
-    """Increment user's model count"""
-    if user_id in user_database:
-        user_database[user_id]['model_count'] += 1
-
-def create_fallback_stl(stl_path):
-    """Create a simple fallback STL file"""
-    # Simple cube STL content
-    stl_content = """solid cube
-  facet normal 0.0 0.0 1.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex -1.0 1.0 1.0
-      vertex -1.0 -1.0 1.0
-    endloop
-  endfacet
-  facet normal 0.0 0.0 1.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex -1.0 -1.0 1.0
-      vertex 1.0 -1.0 1.0
-    endloop
-  endfacet
-  facet normal 0.0 0.0 -1.0
-    outer loop
-      vertex 1.0 -1.0 -1.0
-      vertex -1.0 -1.0 -1.0
-      vertex -1.0 1.0 -1.0
-    endloop
-  endfacet
-  facet normal 0.0 0.0 -1.0
-    outer loop
-      vertex 1.0 -1.0 -1.0
-      vertex -1.0 1.0 -1.0
-      vertex 1.0 1.0 -1.0
-    endloop
-  endfacet
-  facet normal 0.0 1.0 0.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex 1.0 1.0 -1.0
-      vertex -1.0 1.0 -1.0
-    endloop
-  endfacet
-  facet normal 0.0 1.0 0.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex -1.0 1.0 -1.0
-      vertex -1.0 1.0 1.0
-    endloop
-  endfacet
-  facet normal 0.0 -1.0 0.0
-    outer loop
-      vertex 1.0 -1.0 1.0
-      vertex -1.0 -1.0 1.0
-      vertex -1.0 -1.0 -1.0
-    endloop
-  endfacet
-  facet normal 0.0 -1.0 0.0
-    outer loop
-      vertex 1.0 -1.0 1.0
-      vertex -1.0 -1.0 -1.0
-      vertex 1.0 -1.0 -1.0
-    endloop
-  endfacet
-  facet normal 1.0 0.0 0.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex 1.0 -1.0 1.0
-      vertex 1.0 -1.0 -1.0
-    endloop
-  endfacet
-  facet normal 1.0 0.0 0.0
-    outer loop
-      vertex 1.0 1.0 1.0
-      vertex 1.0 -1.0 -1.0
-      vertex 1.0 1.0 -1.0
-    endloop
-  endfacet
-  facet normal -1.0 0.0 0.0
-    outer loop
-      vertex -1.0 1.0 1.0
-      vertex -1.0 1.0 -1.0
-      vertex -1.0 -1.0 -1.0
-    endloop
-  endfacet
-  facet normal -1.0 0.0 0.0
-    outer loop
-      vertex -1.0 1.0 1.0
-      vertex -1.0 -1.0 -1.0
-      vertex -1.0 -1.0 1.0
-    endloop
-  endfacet
-endsolid cube"""
+        logger.error(f"❌ User Management service failed: {e}")
     
-    with open(stl_path, 'w') as f:
-        f.write(stl_content)
+    try:
+        from services.storage import model_storage
+        logger.info("✅ Storage service loaded")
+    except Exception as e:
+        logger.error(f"❌ Storage service failed: {e}")
+    
+    logger.info("🌟 All services initialized - API ready!")
+
+# Shutdown event
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Application shutdown event.
+    
+    Performs cleanup and logs shutdown information.
+    """
+    logger.info("🛑 Shutting down Text-to-CAD API v2.0")
+    
+    # Clean up any temporary files
+    try:
+        from services.storage import model_storage
+        cleanup_count = model_storage.cleanup_old_models(max_age_hours=24)
+        logger.info(f"🧹 Cleaned up {cleanup_count} temporary model files")
+    except Exception as e:
+        logger.warning(f"⚠️ Cleanup warning: {e}")
+    
+    logger.info("✅ Shutdown complete")
+
+# Application entry point
+if __name__ == "__main__":
+    import uvicorn
+    
+    logger.info("🚀 Starting Text-to-CAD API server...")
+    
+    # Run the application
+    uvicorn.run(
+        "app:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info",
+        access_log=True
+    )
 
 if __name__ == '__main__':
     import uvicorn

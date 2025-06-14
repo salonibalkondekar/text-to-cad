@@ -208,6 +208,13 @@ class SidebarComponent {
             
             const stlData = await response.arrayBuffer();
             
+            // Validate STL data before loading
+            if (!stlData || stlData.byteLength === 0) {
+                throw new Error('Downloaded STL file is empty');
+            }
+            
+            this.consoleComponent.log(`📦 STL file downloaded: ${(stlData.byteLength / 1024).toFixed(2)} KB`, 'info');
+            
             // Load STL into Three.js scene
             this.threeManager.loadSTL(stlData);
             
@@ -215,6 +222,15 @@ class SidebarComponent {
             
         } catch (error) {
             this.consoleComponent.log(`❌ STL Loading Error: ${error.message}`, 'error');
+            
+            // Provide helpful error messages
+            if (error.message.includes('offset is outside the bounds')) {
+                this.consoleComponent.log('💡 The STL file appears to be corrupted or incomplete. Try regenerating the model.', 'warning');
+            } else if (error.message.includes('triangle count')) {
+                this.consoleComponent.log('💡 The STL file has an invalid format. This may be due to a server error.', 'warning');
+            } else if (error.message.includes('Failed to download')) {
+                this.consoleComponent.log('💡 Could not download the STL file. Check your network connection.', 'warning');
+            }
         }
     }
 
