@@ -2,7 +2,7 @@
 
 class AuthService {
     constructor() {
-        console.log('🚀 AuthService constructor called (Session-based Mode)');
+        console.log('🚀 AuthService constructor called (Email Collection Mode)');
         this.user = null;
         this.isSignedIn = false;
         this.modelCount = 0;
@@ -60,26 +60,128 @@ class AuthService {
     }
 
     async promptForEmail() {
-        const email = prompt('Please enter your email address to continue:\n(This is temporary - we will implement proper authentication soon)');
-        
-        if (!email) {
-            return null;
-        }
-        
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address.');
-            return this.promptForEmail();
-        }
-        
-        const name = prompt('Please enter your name (optional):') || 'Anonymous User';
-        
-        return {
-            email: email,
-            name: name,
-            id: btoa(email).replace(/[^a-zA-Z0-9]/g, '') // Simple ID from email
-        };
+        return new Promise((resolve) => {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'auth-modal-overlay';
+            
+            const modal = document.createElement('div');
+            modal.className = 'auth-modal';
+            
+            modal.innerHTML = `
+                <div class="auth-modal-header">
+                    <div class="auth-modal-icon">✉️</div>
+                    <h2 class="auth-modal-title">Enter Your Email to Continue</h2>
+                    <p class="auth-modal-subtitle">We need your email to save your creations and track your usage</p>
+                </div>
+                
+                <form class="auth-modal-form" id="authModalForm">
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">
+                            Email Address <span class="auth-input-required">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            class="auth-input" 
+                            id="authEmailInput" 
+                            placeholder="your@email.com"
+                            required
+                            autocomplete="email"
+                        >
+                        <div class="auth-error-message" id="emailError" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">
+                            Your Name <span style="color: #666;">(optional)</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="auth-input" 
+                            id="authNameInput" 
+                            placeholder="John Doe"
+                            autocomplete="name"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="auth-continue-btn" id="authContinueBtn">
+                        Continue to Text-to-CAD
+                    </button>
+                </form>
+                
+                <div class="auth-benefits">
+                    <div class="auth-benefits-title">Why we need your email:</div>
+                    <ul class="auth-benefits-list">
+                        <li>Track your model generation history</li>
+                        <li>Save your projects for later</li>
+                        <li>Get support if something goes wrong</li>
+                        <li>Free usage up to 10 models</li>
+                    </ul>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Focus email input
+            setTimeout(() => {
+                document.getElementById('authEmailInput').focus();
+            }, 100);
+            
+            // Handle form submission
+            const form = document.getElementById('authModalForm');
+            const emailInput = document.getElementById('authEmailInput');
+            const nameInput = document.getElementById('authNameInput');
+            const emailError = document.getElementById('emailError');
+            const continueBtn = document.getElementById('authContinueBtn');
+            
+            // Email validation
+            const validateEmail = (email) => {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            };
+            
+            // Real-time email validation
+            emailInput.addEventListener('input', () => {
+                const email = emailInput.value.trim();
+                if (email && !validateEmail(email)) {
+                    emailInput.classList.add('error');
+                    emailError.textContent = 'Please enter a valid email address';
+                    emailError.style.display = 'block';
+                    continueBtn.disabled = true;
+                } else {
+                    emailInput.classList.remove('error');
+                    emailError.style.display = 'none';
+                    continueBtn.disabled = !email;
+                }
+            });
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const email = emailInput.value.trim();
+                const name = nameInput.value.trim() || 'Anonymous User';
+                
+                if (!validateEmail(email)) {
+                    emailInput.classList.add('error');
+                    emailError.textContent = 'Please enter a valid email address';
+                    emailError.style.display = 'block';
+                    return;
+                }
+                
+                // Remove modal
+                document.body.removeChild(overlay);
+                
+                // Return user info
+                resolve({
+                    email: email,
+                    name: name,
+                    id: btoa(email).replace(/[^a-zA-Z0-9]/g, '') // Simple ID from email
+                });
+            });
+            
+            // No way to close without entering email!
+        });
     }
 
     async signIn() {

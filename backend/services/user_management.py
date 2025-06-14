@@ -1,18 +1,20 @@
 """
-User management service for tracking users and their model generation limits
+Modern user management service using analytics backend
 """
-import threading
-from typing import Dict, Optional, Any
+import os
+import logging
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 from core.config import settings
-from core.models import UserData
 from core.exceptions import UserLimitExceededError, AuthorizationError
-from services.storage import user_data_storage
+from services.analytics_client import analytics_client
+
+logger = logging.getLogger(__name__)
 
 
-class UserManager:
-    """Manages user accounts and model generation limits"""
+class ModernUserManager:
+    """Manages users through the analytics service"""
     
     def __init__(self, max_models_per_user: Optional[int] = None):
         """
@@ -22,249 +24,144 @@ class UserManager:
             max_models_per_user: Maximum models per user (defaults to settings)
         """
         self.max_models_per_user = max_models_per_user or settings.max_models_per_user
-        
-        # In-memory user database for fast access
-        self._users: Dict[str, Dict[str, Any]] = {}
-        self._lock = threading.RLock()
-        
-        # Load existing users from storage
-        self._load_users_from_storage()
+        self.analytics_client = analytics_client
     
-    def _load_users_from_storage(self):
-        """Load users from persistent storage"""
-        try:
-            all_users = user_data_storage.get_all_user_data()
-            with self._lock:
-                for user_id, user_data in all_users.items():
-                    self._users[user_id] = {
-                        'email': user_data.get('email', 'unknown@example.com'),
-                        'name': user_data.get('name', 'Unknown'),
-                        'model_count': user_data.get('model_count', 0),
-                        'created_at': user_data.get('created_at', datetime.now().isoformat()),
-                        'last_login': user_data.get('last_activity', datetime.now().isoformat())
-                    }
-        except Exception:
-            # If loading fails, start with empty user database
-            pass
-    
-    def create_or_update_user(self, user_id: str, email: str, name: str) -> Dict[str, Any]:
+    async def create_or_get_session(
+        self, 
+        email: str, 
+        name: str,
+        request_headers: Dict[str, str]
+    ) -> Dict[str, Any]:
         """
-        Create a new user or update existing user information.
+        Create a new session and user in analytics service.
         
         Args:
-            user_id: Unique identifier for the user
             email: User's email address
             name: User's name
+            request_headers: HTTP headers from request
             
         Returns:
-            User information dictionary
+            Session information including user_id and session_id
         """
-        with self._lock:
-            if user_id not in self._users:
-                # Create new user
-                self._users[user_id] = {
-                    'email': email,
-                    'name': name,
-                    'model_count': 0,
-                    'created_at': datetime.now().isoformat(),
-                    'last_login': datetime.now().isoformat()
-                }
-                
-                # Also create in persistent storage
-                user_data_storage.update_user_data(user_id, {
-                    'email': email,
-                    'name': name,
-                    'prompts': [],
-                    'model_count': 0,
-                    'created_at': datetime.now().isoformat(),
-                    'last_activity': datetime.now().isoformat()
-                })
-            else:
-                # Update existing user
-                self._users[user_id].update({
-                    'email': email,
-                    'name': name,
-                    'last_login': datetime.now().isoformat()
-                })
-                
-                # Update persistent storage
-                existing_data = user_data_storage.get_user_data(user_id) or {}
-                existing_data.update({
-                    'email': email,
-                    'name': name,
-                    'last_activity': datetime.now().isoformat()
-                })
-                user_data_storage.update_user_data(user_id, existing_data)
-            
-            return self._users[user_id].copy()
+        try:
+            result = await self.analytics_client.create_session(
+                email=email,
+                name=name,
+                request_headers=request_headers
+            )
+            logger.info(f"Created session for user: {email}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to create session: {str(e)}")
+            raise AuthorizationError(f"Failed to create session: {str(e)}")
     
-    def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_info(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get user information.
+        Get user information from analytics service.
         
         Args:
-            user_id: Unique identifier for the user
+            user_id: User's unique identifier
             
         Returns:
-            User information if found, None otherwise
+            User information or None if not found
         """
-        with self._lock:
-            return self._users.get(user_id, {}).copy() if user_id in self._users else None
+        try:
+            return await self.analytics_client.get_user_info(user_id)
+        except Exception as e:
+            logger.warning(f"Failed to get user info for {user_id}: {str(e)}")
+            return None
     
-    def check_user_can_generate(self, user_id: str) -> bool:
+    async def check_user_limit(self, user_id: str) -> bool:
         """
-        Check if a user can generate more models.
+        Check if user has reached their model generation limit.
         
         Args:
-            user_id: Unique identifier for the user
+            user_id: User's unique identifier
             
         Returns:
-            True if user can generate, False otherwise
-        """
-        with self._lock:
-            if user_id not in self._users:
-                return True  # New users can generate
-            
-            return self._users[user_id]['model_count'] < self.max_models_per_user
-    
-    def increment_user_model_count(self, user_id: str) -> int:
-        """
-        Increment a user's model count.
-        
-        Args:
-            user_id: Unique identifier for the user
-            
-        Returns:
-            Updated model count
+            True if user can generate more models
             
         Raises:
-            UserLimitExceededError: If user is at the limit
+            UserLimitExceededError: If user has reached their limit
         """
-        with self._lock:
-            if user_id not in self._users:
-                # User doesn't exist, this shouldn't happen in normal flow
-                raise AuthorizationError(f"User {user_id} not found")
-            
-            user = self._users[user_id]
-            
-            if user['model_count'] >= self.max_models_per_user:
-                raise UserLimitExceededError(
-                    user_id=user_id,
-                    current_count=user['model_count'],
-                    max_count=self.max_models_per_user
-                )
-            
-            # Increment count
-            user['model_count'] += 1
-            
-            # Update persistent storage
-            existing_data = user_data_storage.get_user_data(user_id) or {}
-            existing_data['model_count'] = user['model_count']
-            existing_data['last_activity'] = datetime.now().isoformat()
-            user_data_storage.update_user_data(user_id, existing_data)
-            
-            return user['model_count']
+        user_info = await self.get_user_info(user_id)
+        
+        if not user_info:
+            # New user, allow generation
+            return True
+        
+        model_count = user_info.get('model_count', 0)
+        if model_count >= self.max_models_per_user:
+            raise UserLimitExceededError(
+                f"Model generation limit ({self.max_models_per_user}) reached",
+                user_id=user_id,
+                limit=self.max_models_per_user,
+                current=model_count
+            )
+        
+        return True
     
-    def get_user_model_count(self, user_id: str) -> int:
+    async def increment_model_count(
+        self, 
+        user_id: str,
+        session_cookie: str
+    ) -> Dict[str, Any]:
         """
-        Get a user's current model count.
+        Increment user's model count after successful generation.
         
         Args:
-            user_id: Unique identifier for the user
+            user_id: User's unique identifier
+            session_cookie: Session cookie for authentication
             
         Returns:
-            Current model count (0 if user doesn't exist)
+            Updated user information
         """
-        with self._lock:
-            if user_id in self._users:
-                return self._users[user_id]['model_count']
-            return 0
+        try:
+            result = await self.analytics_client.increment_user_count(
+                user_id=user_id,
+                session_cookie=session_cookie
+            )
+            logger.info(f"Incremented model count for user {user_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to increment model count: {str(e)}")
+            # Don't fail the generation if we can't increment count
+            return {"model_count": 0}
     
-    def record_user_prompt(self, user_id: str, prompt: str, prompt_type: str = "generate") -> None:
+    async def track_generation(
+        self,
+        session_cookie: str,
+        prompt: str,
+        success: bool,
+        error_message: Optional[str] = None,
+        generation_time: Optional[float] = None
+    ) -> None:
         """
-        Record a user's prompt in persistent storage.
+        Track a CAD generation event.
         
         Args:
-            user_id: Unique identifier for the user
-            prompt: The prompt text
-            prompt_type: Type of prompt (generate or execute_code)
+            session_cookie: Session cookie for authentication
+            prompt: The generation prompt
+            success: Whether generation succeeded
+            error_message: Error message if failed
+            generation_time: Time taken for generation
         """
-        if user_id and user_id in self._users:
-            email = self._users[user_id].get('email', 'unknown@example.com')
-            user_data_storage.add_user_prompt(user_id, email, prompt, prompt_type)
-    
-    def get_all_users_summary(self) -> Dict[str, Any]:
-        """
-        Get summary information for all users.
-        
-        Returns:
-            Dictionary with user statistics
-        """
-        with self._lock:
-            # Get full data from storage for complete statistics
-            all_user_data = user_data_storage.get_all_user_data()
-            
-            summary = {
-                'total_users': len(all_user_data),
-                'total_prompts': sum(
-                    len(user_data.get('prompts', [])) 
-                    for user_data in all_user_data.values()
-                ),
-                'total_models_generated': sum(
-                    user_data.get('model_count', 0) 
-                    for user_data in all_user_data.values()
-                ),
-                'users': []
-            }
-            
-            for user_id, user_data in all_user_data.items():
-                prompts = user_data.get('prompts', [])
-                summary['users'].append({
-                    'user_id': user_id,
-                    'email': user_data.get('email', 'N/A'),
-                    'name': user_data.get('name', 'N/A'),
-                    'model_count': user_data.get('model_count', 0),
-                    'total_prompts': len(prompts),
-                    'created_at': user_data.get('created_at', 'N/A'),
-                    'last_activity': user_data.get('last_activity', 'N/A'),
-                    'recent_prompts': prompts[-3:] if prompts else []
-                })
-            
-            return summary
-    
-    def reset_user_count(self, user_id: str) -> None:
-        """
-        Reset a user's model count (admin function).
-        
-        Args:
-            user_id: Unique identifier for the user
-        """
-        with self._lock:
-            if user_id in self._users:
-                self._users[user_id]['model_count'] = 0
-                
-                # Update persistent storage
-                existing_data = user_data_storage.get_user_data(user_id) or {}
-                existing_data['model_count'] = 0
-                user_data_storage.update_user_data(user_id, existing_data)
-    
-    def delete_user(self, user_id: str) -> bool:
-        """
-        Delete a user (admin function).
-        
-        Args:
-            user_id: Unique identifier for the user
-            
-        Returns:
-            True if deleted, False if not found
-        """
-        with self._lock:
-            if user_id in self._users:
-                del self._users[user_id]
-                user_data_storage.delete_user_data(user_id)
-                return True
-            return False
+        try:
+            await self.analytics_client.track_cad_event(
+                session_cookie=session_cookie,
+                event_data={
+                    "event_type": "generate",
+                    "prompt": prompt,
+                    "success": success,
+                    "error_message": error_message,
+                    "generation_time": generation_time,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to track generation event: {str(e)}")
+            # Don't fail the request if tracking fails
 
 
-# Global instance
-user_manager = UserManager()
+# Global user manager instance
+user_manager = ModernUserManager()

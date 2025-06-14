@@ -23,21 +23,35 @@ class SidebarComponent {
                     <!-- AI Prompt Section -->
                     <div class="ai-prompt-section">
                         <div class="section-title" style="color: white; margin-bottom: 15px;">🤖 AI Model Generator</div>
-                        <div class="auth-notice" id="authNotice" style="display: none;">
-                            <div class="notice-content">
-                                <span class="notice-icon">📧</span>
-                                <span class="notice-text">Enter your email to generate AI models</span>
+                        
+                        <!-- Prominent Auth Banner -->
+                        <div class="auth-notice-banner" id="authBanner" style="display: none;">
+                            <div class="auth-notice-banner-icon">✉️</div>
+                            <div class="auth-notice-banner-text">
+                                <strong>Email Required!</strong><br>
+                                <small>Enter your email to start creating AI models</small>
                             </div>
+                            <div class="auth-notice-banner-action">Sign In</div>
                         </div>
+                        
+                        <!-- Usage Notice -->
                         <div class="usage-notice" id="usageNotice" style="display: none;">
                             <div class="notice-content">
                                 <span class="notice-icon">⚠️</span>
                                 <span class="notice-text">Model generation limit reached (10/10)</span>
                             </div>
                         </div>
+                        
+                        <!-- Model Count Display -->
+                        <div class="model-count" id="modelCount" style="display: none;">
+                            <span class="model-count-icon">📊</span>
+                            <span class="model-count-text">Models: <strong id="modelCountValue">0/10</strong></span>
+                        </div>
+                        
                         <textarea class="prompt-input" id="promptInput" placeholder="Describe the 3D model you want to create..."></textarea>
                         <button class="generate-button" id="generateModel">
                             <span id="generateText">🚀 Generate 3D Model</span>
+                            <span class="email-required-badge" id="emailBadge" style="display: none;">✉️</span>
                         </button>
                     </div>
 
@@ -90,6 +104,19 @@ class SidebarComponent {
         document.getElementById('sidebarToggle').addEventListener('click', () => {
             this.toggleSidebar();
         });
+
+        // Auth banner click
+        const authBanner = document.getElementById('authBanner');
+        if (authBanner) {
+            authBanner.addEventListener('click', async () => {
+                if (window.authService) {
+                    const success = await window.authService.signIn();
+                    if (success) {
+                        this.updateAuthUI(window.authService.getAuthState());
+                    }
+                }
+            });
+        }
     }
 
     async generateFromPrompt() {
@@ -101,7 +128,16 @@ class SidebarComponent {
 
         // Check authentication
         if (!this.authState || !this.authState.isSignedIn) {
-            this.consoleComponent.log('📧 Please enter your email to generate models', 'error');
+            this.consoleComponent.log('📧 Please enter your email to generate models', 'info');
+            // Trigger sign in
+            if (window.authService) {
+                const success = await window.authService.signIn();
+                if (!success) {
+                    return;
+                }
+                // Update auth state after sign in
+                this.authState = window.authService.getAuthState();
+            }
             return;
         }
 
@@ -407,32 +443,43 @@ class SidebarComponent {
     }
 
     updateAuthUI(authState) {
-        const authNotice = document.getElementById('authNotice');
+        const authBanner = document.getElementById('authBanner');
         const usageNotice = document.getElementById('usageNotice');
+        const modelCount = document.getElementById('modelCount');
+        const modelCountValue = document.getElementById('modelCountValue');
         const generateBtn = document.getElementById('generateModel');
         const promptInput = document.getElementById('promptInput');
 
         if (!authState.isSignedIn) {
-            // Show auth notice, hide usage notice
-            authNotice.style.display = 'block';
-            usageNotice.style.display = 'none';
-            generateBtn.disabled = true;
-            promptInput.disabled = true;
-            promptInput.placeholder = 'Enter your email to generate AI models...';
+            // Show auth banner prominently
+            if (authBanner) authBanner.style.display = 'flex';
+            if (usageNotice) usageNotice.style.display = 'none';
+            if (modelCount) modelCount.style.display = 'none';
+            generateBtn.classList.add('auth-required');
+            // Don't disable - let them click and get prompted
+            generateBtn.disabled = false;
+            promptInput.disabled = false;
+            promptInput.placeholder = 'Describe the 3D model you want to create...';
         } else if (!authState.canGenerate) {
             // Show usage limit notice
-            authNotice.style.display = 'none';
-            usageNotice.style.display = 'block';
+            if (authBanner) authBanner.style.display = 'none';
+            if (usageNotice) usageNotice.style.display = 'block';
+            if (modelCount) modelCount.style.display = 'flex';
+            if (modelCountValue) modelCountValue.textContent = `10/10`;
             generateBtn.disabled = true;
             promptInput.disabled = true;
             promptInput.placeholder = 'Model generation limit reached...';
         } else {
             // User can generate models
-            authNotice.style.display = 'none';
-            usageNotice.style.display = 'none';
+            if (authBanner) authBanner.style.display = 'none';
+            if (usageNotice) usageNotice.style.display = 'none';
+            if (modelCount) modelCount.style.display = 'flex';
+            const count = authState.modelCount || 0;
+            if (modelCountValue) modelCountValue.textContent = `${count}/10`;
+            generateBtn.classList.remove('auth-required');
             generateBtn.disabled = false;
             promptInput.disabled = false;
-            promptInput.placeholder = `Describe the 3D model you want to create... (${authState.remaining} more generations left :)`;
+            promptInput.placeholder = `Describe the 3D model you want to create...`;
         }
     }
 }

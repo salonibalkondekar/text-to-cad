@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     
     # File Storage
     temp_dir: str = Field(default_factory=lambda: os.path.join(os.path.expanduser("~"), ".text-to-cad", "temp"))
-    collected_emails_file: str = "collected_user_emails.json"
+    # Analytics service handles all user data now - no more JSON file needed
+    analytics_url: str = Field(default="http://analytics:8001", env="ANALYTICS_URL")
     
     # Security Settings (for future implementation)
     enable_auth: bool = False

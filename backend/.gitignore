@@ -37,3 +37,4 @@ build/
 # Test reports
 test_report.md
 migration_comparison.md
+UPDATE_TO_ANALYTICS.md

@@ -1,0 +1,249 @@
+/* Auth Modal Styles - Professional and Consistent */
+.auth-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.auth-modal {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.auth-modal-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.auth-modal-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+.auth-modal-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.auth-modal-subtitle {
+    font-size: 14px;
+    color: #999;
+    line-height: 1.5;
+}
+
+.auth-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auth-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auth-input-label {
+    font-size: 14px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.auth-input-required {
+    color: #ff6b6b;
+}
+
+.auth-input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #fff;
+    transition: all 0.2s;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: #666;
+    background: #222;
+}
+
+.auth-input.error {
+    border-color: #d32f2f;
+}
+
+.auth-error-message {
+    font-size: 13px;
+    color: #ff4444;
+    margin-top: 4px;
+}
+
+.auth-continue-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.auth-continue-btn:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.auth-continue-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.auth-benefits {
+    background: #1a1a1a;
+    border-radius: 6px;
+    padding: 14px;
+    margin-top: 16px;
+    border: 1px solid #333;
+}
+
+.auth-benefits-title {
+    font-size: 13px;
+    color: #bbb;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.auth-benefits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.auth-benefits-list li {
+    color: #999;
+    font-size: 13px;
+    padding: 3px 0;
+    padding-left: 18px;
+    position: relative;
+}
+
+.auth-benefits-list li:before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #666;
+}
+
+/* Generate Button Styles */
+.generate-button {
+    position: relative;
+}
+
+.generate-button.auth-required {
+    opacity: 0.8;
+}
+
+/* Auth Notice Banner - Professional */
+.auth-notice-banner {
+    background: #333;
+    color: white;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #444;
+    font-size: 14px;
+}
+
+.auth-notice-banner:hover {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+.auth-notice-banner-icon {
+    font-size: 20px;
+}
+
+.auth-notice-banner-text {
+    flex: 1;
+}
+
+.auth-notice-banner-text strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.auth-notice-banner-text small {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.auth-notice-banner-action {
+    background: #007bff;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+/* Model Count Display */
+.model-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+.model-count-icon {
+    font-size: 18px;
+}
+
+.model-count strong {
+    color: #fff;
+}

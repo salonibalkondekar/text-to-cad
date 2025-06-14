@@ -2,9 +2,7 @@
 Storage service for managing files and temporary models
 """
 import os
-import json
 import uuid
-import tempfile
 import threading
 from pathlib import Path
 from typing import Dict, Optional, Any
@@ -12,7 +10,6 @@ from datetime import datetime, timedelta
 from contextlib import contextmanager
 
 from core.config import settings
-from core.exceptions import StorageError
 
 
 class ModelStorage:
@@ -83,59 +80,78 @@ class ModelStorage:
             model_id: Unique identifier for the model
             
         Returns:
-            True if deleted, False if not found
+            True if model was deleted, False if not found
         """
         with self._lock:
             model_info = self._models.get(model_id)
             if model_info:
+                # Delete the file
                 try:
-                    if os.path.exists(model_info['path']):
-                        os.remove(model_info['path'])
+                    os.remove(model_info['path'])
                 except OSError:
-                    pass  # File might already be deleted
+                    pass  # File may already be deleted
                 
+                # Remove from storage
                 del self._models[model_id]
                 return True
             
             return False
     
-    def cleanup_old_models(self) -> int:
+    def cleanup_old_models(self, force: bool = False) -> int:
         """
-        Remove models older than the cleanup threshold.
+        Clean up old model files.
         
+        Args:
+            force: If True, delete all models regardless of age
+            
         Returns:
             Number of models cleaned up
         """
-        count = 0
-        now = datetime.now()
+        cleanup_count = 0
+        current_time = datetime.now()
         
         with self._lock:
             models_to_delete = []
             
             for model_id, model_info in self._models.items():
-                if now - model_info['created_at'] > self.cleanup_after:
+                if force or (current_time - model_info['accessed_at']) > self.cleanup_after:
                     models_to_delete.append(model_id)
             
             for model_id in models_to_delete:
                 if self.delete_model(model_id):
-                    count += 1
+                    cleanup_count += 1
         
-        return count
+        return cleanup_count
     
-    def get_temp_file_path(self, prefix: str = "model_", suffix: str = ".stl") -> str:
+    def get_temp_file_path(self, suffix: str = '.stl') -> str:
         """
-        Generate a unique temporary file path.
+        Get a path for a new temporary file.
         
         Args:
-            prefix: File name prefix
             suffix: File extension
             
         Returns:
-            Path to a new temporary file
+            Path to the temporary file
         """
-        unique_id = str(uuid.uuid4())
-        filename = f"{prefix}{unique_id}{suffix}"
+        filename = f"{uuid.uuid4()}{suffix}"
         return str(self.temp_dir / filename)
+    
+    def list_models(self) -> Dict[str, Dict[str, Any]]:
+        """
+        List all stored models with their metadata.
+        
+        Returns:
+            Dictionary of model_id -> model info
+        """
+        with self._lock:
+            return {
+                model_id: {
+                    'path': info['path'],
+                    'created_at': info['created_at'].isoformat(),
+                    'accessed_at': info['accessed_at'].isoformat()
+                }
+                for model_id, info in self._models.items()
+            }
     
     @contextmanager
     def temporary_model(self, model_id: Optional[str] = None):
@@ -165,104 +181,5 @@ class ModelStorage:
             raise
 
 
-class UserDataStorage:
-    """Manages user data persistence with thread-safe JSON file operations"""
-    
-    def __init__(self, file_path: Optional[str] = None):
-        """
-        Initialize user data storage.
-        
-        Args:
-            file_path: Path to the JSON file (defaults to settings)
-        """
-        self.file_path = file_path or settings.collected_emails_file
-        self._lock = threading.RLock()
-        self._ensure_file_exists()
-    
-    def _ensure_file_exists(self):
-        """Ensure the JSON file exists"""
-        if not os.path.exists(self.file_path):
-            self._save_data({})
-    
-    def _load_data(self) -> Dict[str, Any]:
-        """Load data from JSON file"""
-        try:
-            with open(self.file_path, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            return {}
-        except Exception as e:
-            raise StorageError(f"Failed to load user data: {str(e)}", "load")
-    
-    def _save_data(self, data: Dict[str, Any]) -> None:
-        """Save data to JSON file"""
-        try:
-            # Write to temporary file first
-            temp_file = f"{self.file_path}.tmp"
-            with open(temp_file, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            # Atomic rename
-            os.replace(temp_file, self.file_path)
-        except Exception as e:
-            raise StorageError(f"Failed to save user data: {str(e)}", "save")
-    
-    def get_user_data(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get data for a specific user"""
-        with self._lock:
-            data = self._load_data()
-            return data.get(user_id)
-    
-    def update_user_data(self, user_id: str, user_data: Dict[str, Any]) -> None:
-        """Update data for a specific user"""
-        with self._lock:
-            data = self._load_data()
-            data[user_id] = user_data
-            self._save_data(data)
-    
-    def add_user_prompt(self, user_id: str, email: str, prompt: str, prompt_type: str = "generate") -> Dict[str, Any]:
-        """Add a prompt to user's history"""
-        with self._lock:
-            data = self._load_data()
-            
-            if user_id not in data:
-                data[user_id] = {
-                    'email': email,
-                    'prompts': [],
-                    'model_count': 0,
-                    'created_at': datetime.now().isoformat(),
-                    'last_activity': datetime.now().isoformat()
-                }
-            
-            # Add the prompt
-            data[user_id]['prompts'].append({
-                'prompt': prompt,
-                'type': prompt_type,
-                'timestamp': datetime.now().isoformat()
-            })
-            
-            # Update last activity
-            data[user_id]['last_activity'] = datetime.now().isoformat()
-            
-            self._save_data(data)
-            return data[user_id]
-    
-    def get_all_user_data(self) -> Dict[str, Any]:
-        """Get all user data"""
-        with self._lock:
-            return self._load_data()
-    
-    def delete_user_data(self, user_id: str) -> bool:
-        """Delete a user's data"""
-        with self._lock:
-            data = self._load_data()
-            if user_id in data:
-                del data[user_id]
-                self._save_data(data)
-                return True
-            return False
-
-
 # Global instances
 model_storage = ModelStorage()
-user_data_storage = UserDataStorage()
