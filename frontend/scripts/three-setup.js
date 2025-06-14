@@ -718,13 +718,6 @@ class ThreeJSManager {
         const triangleCount = dataView.getUint32(80, true); // little endian
         console.log(`📏 Binary STL contains ${triangleCount} triangles`);
         
-<<<<<<< Updated upstream
-        // Calculate expected file size
-        const expectedSize = 84 + triangleCount * 50; // 80-byte header + 4-byte count + 50 bytes per triangle
-        if (dataView.byteLength < expectedSize) {
-            console.warn(`⚠️ STL file size mismatch: expected ${expectedSize} bytes, got ${dataView.byteLength} bytes`);
-            console.warn('Attempting to parse with available data...');
-=======
         // Validate triangle count
         const expectedSize = 84 + (triangleCount * 50);
         if (dataView.byteLength < expectedSize) {
@@ -735,7 +728,6 @@ class ThreeJSManager {
         // Sanity check for triangle count
         if (triangleCount > 10000000) { // 10 million triangles seems like a reasonable upper limit
             throw new Error(`Unrealistic triangle count: ${triangleCount}. File may be corrupted.`);
->>>>>>> Stashed changes
         }
         
         const vertices = [];
@@ -745,18 +737,10 @@ class ThreeJSManager {
         for (let i = 0; i < triangleCount; i++) {
             const offset = 84 + i * 50;
             
-<<<<<<< Updated upstream
-            // Bounds check: ensure we have enough data for this triangle
-            if (offset + 50 > dataView.byteLength) {
-                console.warn(`⚠️ Triangle ${i}: offset ${offset + 50} exceeds buffer size ${dataView.byteLength}`);
-                console.warn(`Only parsing ${i} triangles out of ${triangleCount} claimed triangles`);
-                break; // Stop parsing when we run out of data
-=======
             // Check if we have enough bytes for this triangle
             if (offset + 50 > dataView.byteLength) {
                 console.warn(`Truncated STL: Only ${i} triangles read out of ${triangleCount}`);
                 break;
->>>>>>> Stashed changes
             }
             
             try {
@@ -768,15 +752,12 @@ class ThreeJSManager {
                 // Read 3 vertices (9 floats total)
                 for (let j = 0; j < 3; j++) {
                     const vertexOffset = offset + 12 + j * 12;
-<<<<<<< Updated upstream
-=======
                     
                     // Additional bounds check for each vertex
                     if (vertexOffset + 12 > dataView.byteLength) {
                         throw new Error(`Cannot read vertex at offset ${vertexOffset}`);
                     }
                     
->>>>>>> Stashed changes
                     const x = dataView.getFloat32(vertexOffset, true);
                     const y = dataView.getFloat32(vertexOffset + 4, true);
                     const z = dataView.getFloat32(vertexOffset + 8, true);
@@ -784,14 +765,8 @@ class ThreeJSManager {
                     vertices.push(x, y, z);
                     normals.push(nx, ny, nz);
                 }
-<<<<<<< Updated upstream
-            } catch (error) {
-                console.error(`❌ Error parsing triangle ${i} at offset ${offset}:`, error);
-                console.warn(`Stopping parsing at triangle ${i}/${triangleCount}`);
-=======
             } catch (e) {
                 console.error(`Error reading triangle ${i}: ${e.message}`);
->>>>>>> Stashed changes
                 break;
             }
         }
@@ -804,11 +779,7 @@ class ThreeJSManager {
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.computeBoundingBox();
         
-<<<<<<< Updated upstream
-        console.log(`📏 Parsed binary STL: ${vertices.length / 3} vertices, ${vertices.length / 9} triangles`);
-=======
         console.log(`📏 Parsed binary STL: ${vertices.length / 3} vertices, ${vertices.length / 9} triangles successfully read`);
->>>>>>> Stashed changes
         return geometry;
     }
 }
