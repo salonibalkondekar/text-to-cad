@@ -134,7 +134,10 @@ class ModernUserManager:
         prompt: str,
         success: bool,
         error_message: Optional[str] = None,
-        generation_time: Optional[float] = None
+        generation_time: Optional[float] = None,
+        model_id: Optional[str] = None,
+        stl_file_path: Optional[str] = None,
+        generated_code: Optional[str] = None
     ) -> None:
         """
         Track a CAD generation event.
@@ -145,6 +148,9 @@ class ModernUserManager:
             success: Whether generation succeeded
             error_message: Error message if failed
             generation_time: Time taken for generation
+            model_id: Generated model ID
+            stl_file_path: Path to STL file
+            generated_code: AI generated code
         """
         try:
             await self.analytics_client.track_cad_event(
@@ -155,11 +161,82 @@ class ModernUserManager:
                     "success": success,
                     "error_message": error_message,
                     "generation_time": generation_time,
+                    "model_id": model_id,
+                    "stl_file_path": stl_file_path,
+                    "code": generated_code,
                     "timestamp": datetime.utcnow().isoformat()
                 }
             )
         except Exception as e:
             logger.warning(f"Failed to track generation event: {str(e)}")
+            # Don't fail the request if tracking fails
+    
+    async def store_generated_model(
+        self,
+        session_cookie: str,
+        model_id: str,
+        prompt: str,
+        generated_code: str,
+        stl_file_path: str,
+        stl_file_size: int,
+        generation_time_ms: int,
+        ai_generation_time_ms: Optional[int] = None,
+        execution_time_ms: Optional[int] = None,
+        success: bool = True,
+        error_message: Optional[str] = None
+    ) -> None:
+        """
+        Store a generated model with full metadata in analytics.
+        
+        Args:
+            session_cookie: Session cookie for authentication
+            model_id: Unique model identifier
+            prompt: Original user prompt
+            generated_code: AI-generated BadCAD code
+            stl_file_path: Path to the stored STL file
+            stl_file_size: Size of STL file in bytes
+            generation_time_ms: Total generation time
+            ai_generation_time_ms: AI code generation time
+            execution_time_ms: Code execution time
+            success: Whether generation succeeded
+            error_message: Error message if failed
+        """
+        try:
+            await self.analytics_client.store_model(
+                session_cookie=session_cookie,
+                model_data={
+                    "model_id": model_id,
+                    "prompt": prompt,
+                    "generated_code": generated_code,
+                    "stl_file_path": stl_file_path,
+                    "stl_file_size": stl_file_size,
+                    "generation_time_ms": generation_time_ms,
+                    "ai_generation_time_ms": ai_generation_time_ms,
+                    "execution_time_ms": execution_time_ms,
+                    "success": success,
+                    "error_message": error_message
+                }
+            )
+            logger.info(f"Stored model {model_id} in analytics database")
+        except Exception as e:
+            logger.warning(f"Failed to store model in analytics: {str(e)}")
+            # Don't fail the request if storage fails
+    
+    async def track_model_download(
+        self,
+        model_id: str
+    ) -> None:
+        """
+        Track when a model is downloaded.
+        
+        Args:
+            model_id: Model identifier
+        """
+        try:
+            await self.analytics_client.track_model_download(model_id)
+            logger.info(f"Tracked download for model {model_id}")
+        except Exception as e:
+            logger.warning(f"Failed to track model download: {str(e)}")
             # Don't fail the request if tracking fails
 
 

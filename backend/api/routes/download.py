@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 import os
 
 from services.storage import model_storage
+from services.user_management import user_manager
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,13 @@ async def download_model(model_id: str):
             raise HTTPException(status_code=404, detail="Model not found")
         
         logger.info(f"Serving model file: {stl_file_path} ({os.path.getsize(stl_file_path)} bytes)")
+        
+        # Track download in analytics
+        try:
+            await user_manager.track_model_download(model_id)
+        except Exception as e:
+            logger.warning(f"Failed to track download: {e}")
+            # Don't fail the download if tracking fails
         
         return FileResponse(
             path=stl_file_path,

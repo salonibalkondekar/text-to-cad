@@ -73,6 +73,31 @@ class AnalyticsClient:
             )
             response.raise_for_status()
     
+    async def store_model(
+        self,
+        session_cookie: str,
+        model_data: Dict[str, Any]
+    ) -> None:
+        """Store a generated model with metadata"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/models/store",
+                json=model_data,
+                headers={"Cookie": f"session_id={session_cookie}"}
+            )
+            response.raise_for_status()
+    
+    async def track_model_download(
+        self,
+        model_id: str
+    ) -> None:
+        """Track when a model is downloaded"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/models/{model_id}/download"
+            )
+            response.raise_for_status()
+    
     def close(self):
         """Close the client"""
         self.client.close()

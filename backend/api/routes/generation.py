@@ -52,7 +52,11 @@ async def generate_model(request: PromptRequest, http_request: Request):
                     detail="Model generation limit reached (10 models max)"
                 )
         
+        # Track timing
+        generation_start = time.time()
+        
         # Generate BadCAD code using AI
+        ai_start = time.time()
         try:
             badcad_code = ai_generator.generate_badcad_code(request.prompt)
             generation_status = GenerationStatus.AI_GENERATED
@@ -62,10 +66,12 @@ async def generate_model(request: PromptRequest, http_request: Request):
             # ai_generator.generate_badcad_code already handles fallbacks internally
             badcad_code = ai_generator._generate_fallback_code(request.prompt)
             generation_status = GenerationStatus.FALLBACK_GENERATED
+        ai_time_ms = int((time.time() - ai_start) * 1000)
         
         # Execute BadCAD code and generate STL
         model_id = str(uuid.uuid4())
         
+        execution_start = time.time()
         try:
             stl_file_path = badcad_executor.execute_and_export(badcad_code, model_id)
             logger.info(f"Successfully executed BadCAD code, STL at: {stl_file_path}")
@@ -75,26 +81,61 @@ async def generate_model(request: PromptRequest, http_request: Request):
                 status_code=500, 
                 detail="Failed to execute BadCAD code and generate STL"
             )
+        execution_time_ms = int((time.time() - execution_start) * 1000)
+        total_time_ms = int((time.time() - generation_start) * 1000)
         
         # Store the model file reference
         model_storage.store_model(model_id, stl_file_path)
+        
+        # Get file size for analytics
+        stl_file_size = 0
+        try:
+            import os
+            stl_file_size = os.path.getsize(stl_file_path)
+        except:
+            pass
         
         # Track generation and increment count if authenticated
         if request.user_id:
             try:
                 # Get session cookie from request (if available)
-                session_cookie = http_request.headers.get("cookie", "").split("session_id=")[-1].split(";")[0] if "session_id=" in http_request.headers.get("cookie", "") else None
+                session_cookie = None
+                cookie_header = http_request.headers.get("cookie", "")
+                if "session_id=" in cookie_header:
+                    # Extract session_id value from cookie header
+                    for cookie in cookie_header.split(";"):
+                        cookie = cookie.strip()
+                        if cookie.startswith("session_id="):
+                            session_cookie = cookie.split("=", 1)[1]
+                            break
                 
                 if session_cookie:
                     # Increment model count
                     await user_manager.increment_model_count(request.user_id, session_cookie)
                     
-                    # Track the generation event
+                    # Store comprehensive model data in analytics
+                    await user_manager.store_generated_model(
+                        session_cookie=session_cookie,
+                        model_id=model_id,
+                        prompt=request.prompt,
+                        generated_code=badcad_code,
+                        stl_file_path=stl_file_path,
+                        stl_file_size=stl_file_size,
+                        generation_time_ms=total_time_ms,
+                        ai_generation_time_ms=ai_time_ms,
+                        execution_time_ms=execution_time_ms,
+                        success=True
+                    )
+                    
+                    # Track the generation event with additional metadata
                     await user_manager.track_generation(
                         session_cookie=session_cookie,
                         prompt=request.prompt,
                         success=True,
-                        generation_time=None  # Could add timing if needed
+                        generation_time=total_time_ms / 1000.0,
+                        model_id=model_id,
+                        stl_file_path=stl_file_path,
+                        generated_code=badcad_code
                     )
             except Exception as e:
                 logger.warning(f"Failed to track generation: {e}")
