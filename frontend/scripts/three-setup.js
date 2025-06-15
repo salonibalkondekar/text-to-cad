@@ -16,6 +16,7 @@ class ThreeJSManager {
         this.gridVisible = true;
         this.axesVisible = true;
         this.polarGridVisible = false;
+        this.navigationCube = null;
     }
 
     init(containerId) {
@@ -35,6 +36,7 @@ class ThreeJSManager {
                 alpha: true,
                 powerPreference: "high-performance"
             });
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             this.renderer.shadowMap.enabled = true;
             this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -55,6 +57,7 @@ class ThreeJSManager {
             this.setupLighting();
             this.setupControls();
             this.setupGridsAndAxes();
+            this.createNavigationCube();
             this.resizeRenderer();
             this.animate();
 
@@ -125,7 +128,7 @@ class ThreeJSManager {
         let mouseY = 0;
         let panSpeed = 0.002;
         let rotateSpeed = 0.01;
-        let zoomSpeed = 0.02;
+        let zoomSpeed = 0.04;
 
         const canvas = this.renderer.domElement;
 
@@ -195,7 +198,7 @@ class ThreeJSManager {
             const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
             const zoomDelta = event.deltaY * zoomSpeed;
             const newDistance = distance + zoomDelta;
-            const clampedDistance = Math.max(0.5, Math.min(1000, newDistance));
+            const clampedDistance = Math.max(0.1, Math.min(10000, newDistance));
             
             this.camera.position.normalize().multiplyScalar(clampedDistance);
         });
@@ -283,9 +286,10 @@ class ThreeJSManager {
                 float fade = 1.0 - smoothstep(200.0, 1000.0, distanceToCamera);
                 finalGrid *= fade;
                 
-                // Axis lines (X and Z axes)
-                float axisX = 1.0 - smoothstep(0.0, 0.02, abs(vWorldPosition.z));
-                float axisZ = 1.0 - smoothstep(0.0, 0.02, abs(vWorldPosition.x));
+                // Axis lines (X and Z axes) - improved anti-aliasing
+                float axisLineWidth = 0.015;
+                float axisX = 1.0 - smoothstep(0.0, axisLineWidth, abs(vWorldPosition.z));
+                float axisZ = 1.0 - smoothstep(0.0, axisLineWidth, abs(vWorldPosition.x));
                 
                 // Axis colors (red for X, blue for Z)
                 vec3 axisColorX = vec3(0.8, 0.2, 0.2) * axisX;
@@ -345,6 +349,142 @@ class ThreeJSManager {
         this.scene.add(this.polarGridHelper);
     }
 
+    createNavigationCube() {
+        // Create a navigation cube in the corner
+        const cubeSize = 50;
+        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        
+        // Create materials for each face with labels
+        const materials = [
+            this.createCubeFaceMaterial('X+', 0xff4444), // Right - Red
+            this.createCubeFaceMaterial('X-', 0xff4444), // Left - Red
+            this.createCubeFaceMaterial('Y+', 0x44ff44), // Top - Green
+            this.createCubeFaceMaterial('Y-', 0x44ff44), // Bottom - Green
+            this.createCubeFaceMaterial('Z+', 0x4444ff), // Front - Blue
+            this.createCubeFaceMaterial('Z-', 0x4444ff)  // Back - Blue
+        ];
+        
+        this.navigationCube = new THREE.Mesh(geometry, materials);
+        
+        // Position cube in corner (will be updated in animate loop)
+        this.updateNavigationCubePosition();
+        
+        // Add to scene
+        this.scene.add(this.navigationCube);
+        
+        // Add click interaction
+        this.setupNavigationCubeInteraction();
+    }
+
+    createCubeFaceMaterial(label, color) {
+        // Create canvas for text
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const context = canvas.getContext('2d');
+        
+        // Fill background
+        context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+        context.fillRect(0, 0, 128, 128);
+        
+        // Add border
+        context.strokeStyle = '#ffffff';
+        context.lineWidth = 4;
+        context.strokeRect(2, 2, 124, 124);
+        
+        // Add text
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 32px Arial';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(label, 64, 64);
+        
+        // Create texture and material
+        const texture = new THREE.CanvasTexture(canvas);
+        return new THREE.MeshBasicMaterial({ map: texture });
+    }
+
+    updateNavigationCubePosition() {
+        if (!this.navigationCube) return;
+        
+        // Position cube in bottom-right corner
+        const canvas = this.renderer.domElement;
+        const aspect = canvas.width / canvas.height;
+        const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+        
+        // Calculate corner position
+        const cubeDistance = Math.min(distance * 0.1, 5);
+        const offsetX = cubeDistance * aspect * 0.8;
+        const offsetY = -cubeDistance * 0.8;
+        const offsetZ = cubeDistance * 0.3;
+        
+        // Position relative to camera
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        const cameraRight = new THREE.Vector3();
+        cameraRight.crossVectors(this.camera.up, cameraDirection).normalize();
+        const cameraUp = this.camera.up.clone();
+        
+        this.navigationCube.position.copy(this.camera.position);
+        this.navigationCube.position.addScaledVector(cameraRight, offsetX);
+        this.navigationCube.position.addScaledVector(cameraUp, offsetY);
+        this.navigationCube.position.addScaledVector(cameraDirection, offsetZ);
+        
+        // Rotate cube to match camera orientation
+        this.navigationCube.rotation.copy(this.camera.rotation);
+    }
+
+    setupNavigationCubeInteraction() {
+        // Add click detection for navigation cube faces
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        this.renderer.domElement.addEventListener('click', (event) => {
+            // Convert mouse position to normalized device coordinates
+            const rect = this.renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            // Check if we clicked on the navigation cube
+            raycaster.setFromCamera(mouse, this.camera);
+            const intersects = raycaster.intersectObject(this.navigationCube);
+            
+            if (intersects.length > 0) {
+                const faceIndex = intersects[0].face.materialIndex;
+                this.handleNavigationCubeClick(faceIndex);
+            }
+        });
+    }
+
+    handleNavigationCubeClick(faceIndex) {
+        const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+        
+        // Set camera positions based on face clicked
+        switch (faceIndex) {
+            case 0: // X+ (Right)
+                this.camera.position.set(distance, 0, 0);
+                break;
+            case 1: // X- (Left)
+                this.camera.position.set(-distance, 0, 0);
+                break;
+            case 2: // Y+ (Top)
+                this.camera.position.set(0, distance, 0);
+                break;
+            case 3: // Y- (Bottom)
+                this.camera.position.set(0, -distance, 0);
+                break;
+            case 4: // Z+ (Front)
+                this.camera.position.set(0, 0, distance);
+                break;
+            case 5: // Z- (Back)
+                this.camera.position.set(0, 0, -distance);
+                break;
+        }
+        
+        this.camera.lookAt(0, 0, 0);
+        console.log(`📐 Switched to view: ${['X+', 'X-', 'Y+', 'Y-', 'Z+', 'Z-'][faceIndex]}`);
+    }
+
     resizeRenderer() {
         const viewport = this.renderer.domElement.parentElement;
         const width = viewport.clientWidth;
@@ -363,6 +503,9 @@ class ThreeJSManager {
             this.gridMaterial.uniforms.uCameraPosition.value.copy(this.camera.position);
             this.gridMaterial.uniforms.uTime.value += 0.01;
         }
+
+        // Update navigation cube position
+        this.updateNavigationCubePosition();
 
         if (this.animationEnabled && this.modelBuilder.getCurrentModel()) {
             this.modelBuilder.getCurrentModel().rotation.y += 0.01;
@@ -430,21 +573,6 @@ class ThreeJSManager {
         return this.polarGridVisible;
     }
 
-    toggleXYGrid() {
-        if (this.xyGridHelper) {
-            this.xyGridHelper.visible = !this.xyGridHelper.visible;
-            return this.xyGridHelper.visible;
-        }
-        return false;
-    }
-
-    toggleYZGrid() {
-        if (this.yzGridHelper) {
-            this.yzGridHelper.visible = !this.yzGridHelper.visible;
-            return this.yzGridHelper.visible;
-        }
-        return false;
-    }
 
     buildModel(code) {
         try {

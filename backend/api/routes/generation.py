@@ -110,7 +110,7 @@ async def generate_model(request: PromptRequest, http_request: Request):
                             break
                 
                 if session_cookie:
-                    # Increment model count
+                    # Increment model count first
                     await user_manager.increment_model_count(request.user_id, session_cookie)
                     
                     # Store comprehensive model data in analytics
@@ -137,6 +137,8 @@ async def generate_model(request: PromptRequest, http_request: Request):
                         stl_file_path=stl_file_path,
                         generated_code=badcad_code
                     )
+                    
+                    logger.info(f"Successfully tracked model generation for user {request.user_id}")
             except Exception as e:
                 logger.warning(f"Failed to track generation: {e}")
                 # Don't fail the request if tracking fails
@@ -219,19 +221,52 @@ async def execute_badcad_code(request: BadCADCodeRequest, http_request: Request)
         if request.user_id:
             try:
                 # Get session cookie from request (if available)
-                session_cookie = http_request.headers.get("cookie", "").split("session_id=")[-1].split(";")[0] if "session_id=" in http_request.headers.get("cookie", "") else None
+                session_cookie = None
+                cookie_header = http_request.headers.get("cookie", "")
+                if "session_id=" in cookie_header:
+                    # Extract session_id value from cookie header
+                    for cookie in cookie_header.split(";"):
+                        cookie = cookie.strip()
+                        if cookie.startswith("session_id="):
+                            session_cookie = cookie.split("=", 1)[1]
+                            break
                 
                 if session_cookie:
-                    # Increment model count
+                    # Get file size for analytics
+                    stl_file_size = 0
+                    try:
+                        import os
+                        stl_file_size = os.path.getsize(stl_file_path)
+                    except:
+                        pass
+                    
+                    # Increment model count first
                     await user_manager.increment_model_count(request.user_id, session_cookie)
+                    
+                    # Store comprehensive model data in analytics
+                    await user_manager.store_generated_model(
+                        session_cookie=session_cookie,
+                        model_id=model_id,
+                        prompt=f"[User BadCAD Code]: {request.code[:200]}...",
+                        generated_code=request.code,
+                        stl_file_path=stl_file_path,
+                        stl_file_size=stl_file_size,
+                        generation_time_ms=1000,  # Execution time not measured for user code
+                        success=True
+                    )
                     
                     # Track the execution event
                     await user_manager.track_generation(
                         session_cookie=session_cookie,
                         prompt=f"[BadCAD Code]: {request.code[:100]}...",
                         success=True,
-                        generation_time=None
+                        generation_time=None,
+                        model_id=model_id,
+                        stl_file_path=stl_file_path,
+                        generated_code=request.code
                     )
+                    
+                    logger.info(f"Successfully tracked code execution for user {request.user_id}")
             except Exception as e:
                 logger.warning(f"Failed to track execution: {e}")
                 # Don't fail the request if tracking fails

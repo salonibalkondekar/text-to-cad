@@ -194,21 +194,37 @@ class AuthService {
                 return false;
             }
             
+            // Create session with analytics backend
+            const sessionResponse = await fetch('/analytics/auth/create-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `email=${encodeURIComponent(userInfo.email)}&name=${encodeURIComponent(userInfo.name)}`,
+                credentials: 'include'
+            });
+
+            if (!sessionResponse.ok) {
+                const errorData = await sessionResponse.json().catch(() => ({}));
+                throw new Error(`Session creation failed: ${errorData.detail || 'Unknown error'}`);
+            }
+
+            const sessionData = await sessionResponse.json();
+            this.csrfToken = sessionData.csrf_token;
+            
             this.user = {
-                id: userInfo.id,
-                name: userInfo.name,
-                email: userInfo.email,
-                imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.name)}&background=random`
+                id: sessionData.user.id,
+                name: sessionData.user.name,
+                email: sessionData.user.email,
+                imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(sessionData.user.name)}&background=random`
             };
             this.isSignedIn = true;
-            
-            // Load user data from backend
-            await this.loadUserData();
+            this.modelCount = sessionData.user.model_count;
             
             // Save to localStorage
             this.saveLocalUserData();
             
-            console.log('✅ User signed in:', this.getUserInfo());
+            console.log('✅ User signed in with analytics session:', this.getUserInfo());
             this.notifyAuthStateChanged();
             
             return true;
@@ -221,9 +237,16 @@ class AuthService {
 
     async signOut() {
         try {
+            // Destroy analytics session
+            await fetch('/analytics/auth/destroy-session', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            
             this.user = null;
             this.isSignedIn = false;
             this.modelCount = 0;
+            this.csrfToken = null;
             
             // Clear localStorage
             localStorage.removeItem('tempUserData');
@@ -242,17 +265,9 @@ class AuthService {
         if (!this.isSignedIn || !this.user) return;
 
         try {
-            const userInfo = this.getUserInfo();
-            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/user/info`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_id: userInfo.id,
-                    email: userInfo.email,
-                    name: userInfo.name
-                })
+            // Load current user data from analytics backend
+            const response = await fetch('/analytics/auth/current-user', {
+                credentials: 'include'
             });
 
             if (response.ok) {
@@ -260,47 +275,13 @@ class AuthService {
                 this.modelCount = userData.model_count || 0;
                 this.saveLocalUserData(); // Update localStorage
                 console.log(`📊 User has generated ${this.modelCount}/${this.maxModels} models`);
+                this.notifyAuthStateChanged();
             }
         } catch (error) {
             console.error('❌ Failed to load user data:', error);
         }
     }
 
-    async incrementModelCount() {
-        if (!this.isSignedIn) {
-            throw new Error('User must be signed in to generate models');
-        }
-
-        if (this.modelCount >= this.maxModels) {
-            throw new Error(`You have reached the maximum limit of ${this.maxModels} models. Please upgrade your account or contact support.`);
-        }
-
-        try {
-            const userInfo = this.getUserInfo();
-            const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/user/increment-count`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_id: userInfo.id
-                })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                this.modelCount = result.model_count;
-                this.saveLocalUserData(); // Update localStorage
-                this.notifyAuthStateChanged();
-                return true;
-            } else {
-                throw new Error('Failed to update model count');
-            }
-        } catch (error) {
-            console.error('❌ Failed to increment model count:', error);
-            throw error;
-        }
-    }
 
     getUserInfo() {
         if (!this.user) return null;

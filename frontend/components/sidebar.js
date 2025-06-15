@@ -156,12 +156,13 @@ class SidebarComponent {
         try {
             this.consoleComponent.log(`🤖 Sending prompt to backend: "${prompt}"`, 'ai');
             
-            // Include user ID in the request
+            // Include user ID in the request with session credentials
             const response = await fetch(`${window.API_URL || 'http://localhost:8000'}/api/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ 
                     prompt: prompt,
                     user_id: this.authState.user?.id
@@ -235,7 +236,9 @@ class SidebarComponent {
             
             // Download STL file from backend
             const stlUrl = `${window.API_URL || 'http://localhost:8000'}/api/download/${modelId}`;
-            const response = await fetch(stlUrl);
+            const response = await fetch(stlUrl, {
+                credentials: 'include'
+            });
             
             if (!response.ok) {
                 throw new Error(`Failed to download STL: ${response.status}`);
@@ -343,6 +346,7 @@ class SidebarComponent {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ 
                     code: code,
                     user_id: this.authState.user?.id
