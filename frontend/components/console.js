@@ -9,7 +9,7 @@ class ConsoleComponent {
         const consoleHTML = `
             <div class="console-section">
                 <div class="console-resize-handle" id="consoleResizeHandle"></div>
-                <div class="console-header">AI Console</div>
+                <div class="section-title">AI Console</div>
                 <div class="console-output" id="consoleOutput">AI CAD system ready. Describe your 3D model to get started...</div>
             </div>
         `;
