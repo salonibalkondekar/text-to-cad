@@ -22,7 +22,7 @@ class SidebarComponent {
                 <div class="sidebar-content" id="sidebarContent">
                     <!-- AI Prompt Section -->
                     <div class="ai-prompt-section">
-                        <div class="section-title" style="color: white; margin-bottom: 15px;">🤖 AI Model Generator</div>
+                        <div class="section-title">AI Model Generator</div>
                         
                         <!-- Prominent Auth Banner -->
                         <div class="auth-notice-banner" id="authBanner" style="display: none;">
@@ -56,7 +56,7 @@ class SidebarComponent {
 
                     <!-- Generated CAD Code Section -->
                     <div class="code-section">
-                        <div class="section-title">💻 Generated CAD Code</div>
+                        <div class="section-title">Generated CAD Code</div>
                         <textarea class="code-editor" id="codeEditor">${projects.basicShapes}</textarea>
                         <div class="button-row">
                             <button class="build-button" id="buildModel">🔨 BUILD MODEL</button>
@@ -66,7 +66,7 @@ class SidebarComponent {
                 </div>
 
                 <!-- Console will be rendered here with its own resize handle -->
-                <div id="console-container" style="height: 150px;"></div>
+                <div id="console-container"></div>
             </div>
         `;
         
@@ -92,11 +92,13 @@ class SidebarComponent {
             this.consoleComponent.log('💾 STL download only available for BadCAD models generated via backend', 'info');
         });
 
-        // Enter key for prompt input
+        // Enter key for prompt input (Enter = generate, Shift+Enter = new line)
         document.getElementById('promptInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 this.generateFromPrompt();
             }
+            // Shift+Enter allows normal new line behavior
         });
 
         // Sidebar toggle

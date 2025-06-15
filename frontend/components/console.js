@@ -9,7 +9,7 @@ class ConsoleComponent {
         const consoleHTML = `
             <div class="console-section">
                 <div class="console-resize-handle" id="consoleResizeHandle"></div>
-                <div class="console-header">🤖 AI Console</div>
+                <div class="console-header">AI Console</div>
                 <div class="console-output" id="consoleOutput">AI CAD system ready. Describe your 3D model to get started...</div>
             </div>
         `;
@@ -22,7 +22,6 @@ class ConsoleComponent {
     initializeConsoleResizer() {
         const resizeHandle = document.getElementById('consoleResizeHandle');
         const consoleContainer = document.getElementById('console-container');
-        const sidebarContent = document.getElementById('sidebarContent');
         let isResizing = false;
         let startY = 0;
         let startHeight = 0;
@@ -42,15 +41,11 @@ class ConsoleComponent {
             const deltaY = startY - e.clientY; // Inverted because we're resizing from top
             const newHeight = startHeight + deltaY;
             
-            const minHeight = 80;
-            const maxHeight = window.innerHeight - 200; // Leave space for sidebar content
+            const minHeight = 120;
+            const maxHeight = 400;
             
             if (newHeight >= minHeight && newHeight <= maxHeight) {
                 consoleContainer.style.height = newHeight + 'px';
-                // Adjust sidebar content height accordingly
-                const sidebarHeight = window.innerHeight - 60; // Account for header
-                const remainingHeight = sidebarHeight - newHeight;
-                sidebarContent.style.height = remainingHeight + 'px';
             }
         });
 
