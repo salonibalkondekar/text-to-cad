@@ -8,14 +8,14 @@ FastAPI backend server that generates 3D CAD models using BadCAD.
 ```bash
 pip install -r requirements.txt
 ```
-
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 2. Run the server:
 ```bash
 python app.py
 ```
 Or using uvicorn directly:
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
 ```
 
 The server will start on http://localhost:8000

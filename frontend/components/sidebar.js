@@ -6,6 +6,7 @@ class SidebarComponent {
         this.threeManager = threeManager;
         this.consoleComponent = consoleComponent;
         this.authState = null;
+        this.currentModelId = null; // Track the current model ID for downloads
     }
 
     render() {
@@ -89,7 +90,7 @@ class SidebarComponent {
 
         // Download STL button
         document.getElementById('downloadModelSTL').addEventListener('click', () => {
-            this.consoleComponent.log('💾 STL download only available for BadCAD models generated via backend', 'info');
+            this.downloadSTL();
         });
 
         // Enter key for prompt input (Enter = generate, Shift+Enter = new line)
@@ -155,6 +156,9 @@ class SidebarComponent {
         generateBtn.disabled = true;
         generateText.innerHTML = '<span class="loading-spinner"></span> Generating...';
 
+        // Reset current model ID for new generation
+        this.currentModelId = null;
+
         try {
             this.consoleComponent.log(`🤖 Sending prompt to backend: "${prompt}"`, 'ai');
             
@@ -180,6 +184,9 @@ class SidebarComponent {
             
             if (result.success) {
                 this.consoleComponent.log(`✅ ${result.message}`, 'success');
+                
+                // Store the model ID for download functionality
+                this.currentModelId = result.model_id;
                 
                 // Display the BadCAD code in the editor
                 document.getElementById('codeEditor').value = result.badcad_code;
@@ -288,8 +295,9 @@ class SidebarComponent {
             this.consoleComponent.log(`🔍 Code detection - BadCAD: ${isBadCAD}, CAD: ${/cad\./.test(code)}`, 'info');
             
             if (/cad\./.test(code)) {
-                // Three.js CAD mode
+                // Three.js CAD mode - no STL file available for download
                 this.consoleComponent.log('🔧 Building CAD model...', 'info');
+                this.currentModelId = null; // Clear model ID as this is local visualization only
                 const result = this.threeManager.buildModel(code);
                 
                 if (result) {
@@ -365,6 +373,9 @@ class SidebarComponent {
             if (result.success) {
                 this.consoleComponent.log(`✅ ${result.message}`, 'success');
                 
+                // Store the model ID for download functionality
+                this.currentModelId = result.model_id;
+                
                 // Load and display the STL model
                 await this.loadSTLModel(result.model_id);
 
@@ -379,6 +390,36 @@ class SidebarComponent {
 
         } catch (error) {
             this.consoleComponent.log(`❌ BadCAD Execution Error: ${error.message}`, 'error');
+        }
+    }
+
+    async downloadSTL() {
+        try {
+            if (!this.currentModelId) {
+                this.consoleComponent.log('⚠️ No model available for download. Please generate or build a model first.', 'warning');
+                return;
+            }
+
+            this.consoleComponent.log('📥 Downloading STL file...', 'info');
+
+            // Create download URL
+            const downloadUrl = `${window.API_URL || 'http://localhost:8000'}/api/download/${this.currentModelId}`;
+            
+            // Create temporary link element for download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `model_${this.currentModelId}.stl`;
+            link.style.display = 'none';
+            
+            // Add to document, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            this.consoleComponent.log('✅ STL download initiated!', 'success');
+            
+        } catch (error) {
+            this.consoleComponent.log(`❌ Download Error: ${error.message}`, 'error');
         }
     }
 
