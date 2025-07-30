@@ -1,6 +1,7 @@
 """
 STL fallback generation utilities
 """
+
 import os
 from typing import Dict, Callable
 
@@ -8,7 +9,7 @@ from typing import Dict, Callable
 def create_fallback_stl(stl_path: str) -> None:
     """
     Create a simple fallback STL file (cube).
-    
+
     Args:
         stl_path: Path where the STL file should be created
     """
@@ -98,44 +99,44 @@ def create_fallback_stl(stl_path: str) -> None:
     endloop
   endfacet
 endsolid cube"""
-    
+
     # Ensure directory exists
     os.makedirs(os.path.dirname(stl_path), exist_ok=True)
-    
-    with open(stl_path, 'w') as f:
+
+    with open(stl_path, "w") as f:
         f.write(stl_content)
 
 
 def generate_smart_fallback_badcad_code(prompt: str) -> str:
     """
     Generate a smarter fallback BadCAD code based on prompt keywords.
-    
+
     Args:
         prompt: The user's prompt
-        
+
     Returns:
         BadCAD code that somewhat matches the prompt
     """
     prompt_lower = prompt.lower()
-    
+
     # Define keyword-based generators
     generators: Dict[tuple, Callable[[], str]] = {
-        ('cone', 'triangle', 'pyramid'): _generate_cone_code,
-        ('sphere', 'ball', 'round', 'orb'): _generate_sphere_code,
-        ('cylinder', 'tube', 'pipe', 'rod'): _generate_cylinder_code,
-        ('ring', 'washer', 'hole', 'donut', 'torus'): _generate_ring_code,
-        ('gear', 'cog', 'teeth', 'sprocket'): _generate_gear_code,
-        ('star', 'asterisk'): _generate_star_code,
-        ('hexagon', 'hex', 'nut', 'bolt'): _generate_hexagon_code,
-        ('stairs', 'staircase', 'steps'): _generate_stairs_code,
-        ('cross', 'plus', '+'): _generate_cross_code,
+        ("cone", "triangle", "pyramid"): _generate_cone_code,
+        ("sphere", "ball", "round", "orb"): _generate_sphere_code,
+        ("cylinder", "tube", "pipe", "rod"): _generate_cylinder_code,
+        ("ring", "washer", "hole", "donut", "torus"): _generate_ring_code,
+        ("gear", "cog", "teeth", "sprocket"): _generate_gear_code,
+        ("star", "asterisk"): _generate_star_code,
+        ("hexagon", "hex", "nut", "bolt"): _generate_hexagon_code,
+        ("stairs", "staircase", "steps"): _generate_stairs_code,
+        ("cross", "plus", "+"): _generate_cross_code,
     }
-    
+
     # Check each set of keywords
     for keywords, generator in generators.items():
         if any(word in prompt_lower for word in keywords):
             return generator()
-    
+
     # Default to a simple box
     return _generate_default_box_code()
 
@@ -251,7 +252,7 @@ def generate_hardcoded_badcad_code() -> str:
     """
     Generate basic hardcoded BadCAD code.
     This is the absolute fallback when nothing else works.
-    
+
     Returns:
         Basic BadCAD code for a simple box
     """

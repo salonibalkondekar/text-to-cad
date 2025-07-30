@@ -1,6 +1,7 @@
 """
 Pytest configuration and fixtures
 """
+
 import pytest
 import os
 import sys
@@ -19,7 +20,7 @@ os.environ["TESTING"] = "true"
 def cleanup_test_files():
     """Cleanup any test files created during tests"""
     yield
-    
+
     # Remove any test JSON files
     test_json = backend_dir / "collected_user_emails.json"
     if test_json.exists():
@@ -46,7 +47,7 @@ def temp_stl_file(tmp_path):
     endloop
   endfacet
 endsolid test_model"""
-    
+
     stl_file = tmp_path / "test_model.stl"
     stl_file.write_text(stl_content)
     return str(stl_file)

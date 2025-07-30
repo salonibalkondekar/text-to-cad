@@ -4,11 +4,12 @@ Dependency injection for API routes
 This module provides dependency injection functions for FastAPI routes,
 ensuring consistent service instances across the application.
 """
+
 from typing import Annotated
 from fastapi import Depends
 
 from services.ai_generation import ai_generator
-from services.badcad_executor import badcad_executor  
+from services.badcad_executor import badcad_executor
 from services.user_management import user_manager
 from services.storage import model_storage
 
@@ -16,7 +17,7 @@ from services.storage import model_storage
 def get_ai_generator():
     """
     Dependency to get the AI code generator service.
-    
+
     Returns:
         AICodeGenerator: The singleton AI generator instance
     """
@@ -26,7 +27,7 @@ def get_ai_generator():
 def get_badcad_executor():
     """
     Dependency to get the BadCAD executor service.
-    
+
     Returns:
         BadCADExecutor: The singleton BadCAD executor instance
     """
@@ -36,7 +37,7 @@ def get_badcad_executor():
 def get_user_manager():
     """
     Dependency to get the user management service.
-    
+
     Returns:
         UserManager: The singleton user manager instance
     """
@@ -46,7 +47,7 @@ def get_user_manager():
 def get_model_storage():
     """
     Dependency to get the model storage service.
-    
+
     Returns:
         ModelStorage: The singleton model storage instance
     """
