@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     cors_allow_headers: list[str] = Field(default=["*"])
     
     # Gemini AI Settings
-    gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
-    gemini_model: str = "gemini-2.5-flash-preview-04-17"
+    gemini_api_key: str = Field(..., env="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-2.5-pro", env="GEMINI_MODEL")
     
     # User Limits
     max_models_per_user: int = 10
