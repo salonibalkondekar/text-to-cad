@@ -2,10 +2,11 @@
 Pytest configuration and fixtures
 """
 
-import pytest
 import os
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add backend directory to Python path
 backend_dir = Path(__file__).parent.parent

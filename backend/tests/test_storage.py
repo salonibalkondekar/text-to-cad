@@ -2,16 +2,13 @@
 Tests for storage services
 """
 
-import os
 import json
+import os
 import tempfile
-import time
 from datetime import datetime, timedelta
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from services.storage import ModelStorage, UserDataStorage
-from core.exceptions import StorageError
 
 
 class TestModelStorage:

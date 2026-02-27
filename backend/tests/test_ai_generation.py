@@ -2,11 +2,12 @@
 Tests for AI generation service
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from services.ai_generation import AICodeGenerator, ai_generator
+import pytest
+
 from core.exceptions import AIGenerationError, ConfigurationError
+from services.ai_generation import AICodeGenerator, ai_generator
 
 
 class TestAICodeGenerator:

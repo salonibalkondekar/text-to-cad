@@ -4,10 +4,9 @@ Integration tests for the new modular app.py
 Tests the complete application with all routes and services working together.
 """
 
-import pytest
 import uuid
-import tempfile
-import os
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app import app

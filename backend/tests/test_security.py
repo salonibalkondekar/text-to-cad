@@ -2,11 +2,12 @@
 Security and edge case tests for the Text-to-CAD API
 """
 
-import pytest
-from unittest.mock import patch, Mock
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -173,8 +174,8 @@ class TestEdgeCases:
 
     def test_concurrent_requests_same_user(self):
         """Test handling of concurrent requests from same user"""
-        from threading import Thread
         import queue
+        from threading import Thread
 
         user_id = "concurrent_user"
         results = queue.Queue()

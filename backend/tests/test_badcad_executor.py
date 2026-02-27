@@ -2,13 +2,13 @@
 Tests for BadCAD executor service
 """
 
-import os
 import tempfile
-import pytest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
+import pytest
+
+from core.exceptions import BadCADExecutionError, StorageError
 from services.badcad_executor import BadCADExecutor, badcad_executor
-from core.exceptions import BadCADExecutionError, DependencyError, StorageError
 
 
 class TestBadCADExecutor:

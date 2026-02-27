@@ -2,14 +2,14 @@
 Comprehensive test suite for the Text-to-CAD API
 """
 
-import pytest
-import json
 import os
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
 import sys
+import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 with patch("app.load_dotenv"):
     with patch("app.badcad"):
         with patch("app.genai"):
-            from app import app, user_database, temp_models, collected_user_data
+            from app import app, collected_user_data, temp_models, user_database
 
 client = TestClient(app)
 
@@ -107,9 +107,7 @@ class TestAPIEndpoints:
         """Test execute endpoint with empty code"""
         response = client.post(
             "/api/execute",
-            json={
-                "code": "   "  # Just whitespace
-            },
+            json={"code": "   "},  # Just whitespace
         )
 
         assert response.status_code == 400

@@ -2,8 +2,7 @@
 Tests for code extraction utilities
 """
 
-import pytest
-from utils.code_extraction import extract_badcad_code, validate_badcad_code, clean_code
+from utils.code_extraction import clean_code, extract_badcad_code, validate_badcad_code
 
 
 class TestExtractBadCADCode:

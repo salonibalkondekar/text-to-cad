@@ -2,12 +2,12 @@
 Tests for user management service
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime
+from unittest.mock import patch
 
+import pytest
+
+from core.exceptions import AuthorizationError, UserLimitExceededError
 from services.user_management import UserManager
-from core.exceptions import UserLimitExceededError, AuthorizationError
 
 
 class TestUserManager:

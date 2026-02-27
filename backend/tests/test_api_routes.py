@@ -5,19 +5,19 @@ Comprehensive test suite for all API endpoints to ensure they work correctly
 with the new modular service architecture.
 """
 
-import pytest
-import json
-import uuid
-import tempfile
 import os
-from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
+import tempfile
+import uuid
+from unittest.mock import patch
 
-from api.routes.generation import router as generation_router
-from api.routes.download import router as download_router
-from api.routes.user import router as user_router
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from api.routes.admin import router as admin_router
+from api.routes.download import router as download_router
+from api.routes.generation import router as generation_router
+from api.routes.user import router as user_router
 
 
 @pytest.fixture

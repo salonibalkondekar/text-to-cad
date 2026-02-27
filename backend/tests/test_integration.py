@@ -3,14 +3,14 @@ Integration tests for the Text-to-CAD API
 Tests complete workflows and interactions between components
 """
 
-import pytest
 import json
 import os
-import tempfile
-from unittest.mock import patch, Mock
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 with patch("app.load_dotenv"):
     with patch("app.badcad"):
         with patch("app.genai"):
-            from app import app, user_database, temp_models
+            from app import app, temp_models, user_database
 
 client = TestClient(app)
 
@@ -293,8 +293,8 @@ class TestConcurrentOperations:
 
     def test_concurrent_model_generation(self):
         """Test multiple users generating models concurrently"""
-        from threading import Thread
         import queue
+        from threading import Thread
 
         results = queue.Queue()
 
@@ -347,8 +347,8 @@ class TestConcurrentOperations:
             "model_count": 0,
         }
 
-        from threading import Thread, Lock
         import queue
+        from threading import Thread
 
         results = queue.Queue()
 
@@ -408,7 +408,7 @@ class TestErrorRecovery:
             mock_load.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
 
             # Should handle gracefully and return empty data
-            response = client.get("/api/admin/collected-emails")
+            client.get("/api/admin/collected-emails")
             # Current implementation would fail - this documents the issue
 
     def test_recovery_from_disk_full(self):

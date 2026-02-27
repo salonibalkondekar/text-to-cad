@@ -4,11 +4,13 @@ Tests for STL fallback utilities
 
 import os
 import tempfile
+
 import pytest
+
 from utils.stl_fallback import (
     create_fallback_stl,
-    generate_smart_fallback_badcad_code,
     generate_hardcoded_badcad_code,
+    generate_smart_fallback_badcad_code,
 )
 
 

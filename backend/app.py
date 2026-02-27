@@ -7,12 +7,14 @@ services for AI generation, BadCAD execution, user management, and storage.
 """
 
 import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.routes import admin, download, generation, user
+
 # Import modular components
 from core.config import settings
-from api.routes import generation, download, user, admin
 
 # Configure logging
 logging.basicConfig(
@@ -101,28 +103,28 @@ async def startup_event():
 
     # Log service availability
     try:
-        from services.ai_generation import ai_generator
+        from services.ai_generation import ai_generator  # noqa: F401
 
         logger.info("✅ AI Generation service loaded")
     except Exception as e:
         logger.error(f"❌ AI Generation service failed: {e}")
 
     try:
-        from services.badcad_executor import badcad_executor
+        from services.badcad_executor import badcad_executor  # noqa: F401
 
         logger.info("✅ BadCAD Executor service loaded")
     except Exception as e:
         logger.error(f"❌ BadCAD Executor service failed: {e}")
 
     try:
-        from services.user_management import user_manager
+        from services.user_management import user_manager  # noqa: F401
 
         logger.info("✅ User Management service loaded")
     except Exception as e:
         logger.error(f"❌ User Management service failed: {e}")
 
     try:
-        from services.storage import model_storage
+        from services.storage import model_storage  # noqa: F401
 
         logger.info("✅ Storage service loaded")
     except Exception as e:
