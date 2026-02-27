@@ -46,8 +46,8 @@ jobs:
         pip install flake8 black isort
         # Check code formatting
         black --check app.py tests/
-        # Check import sorting
-        isort --check-only app.py tests/
+        # Check import sorting (profile=black for compatibility with black)
+        isort --profile black --check-only app.py tests/
         # Run flake8 linting
         flake8 app.py tests/ --max-line-length=120 --ignore=E501,W503
     
