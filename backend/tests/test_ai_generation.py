@@ -15,7 +15,7 @@ class TestAICodeGenerator:
     def test_init_with_defaults(self):
         """Test initialization with default settings"""
         generator = AICodeGenerator()
-        assert generator.model_name == "gemini-2.5-flash-preview-04-17"
+        assert generator.model_name == "gemini-2.5-pro"
         assert generator.client is not None or not generator.available
 
     def test_init_with_custom_model(self):
